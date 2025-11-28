@@ -1,0 +1,11 @@
+﻿.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+.venv/
+.env
+*.zip
+*.pdf
+node_images.zip
