@@ -98,16 +98,30 @@ def topk_indices(scores: np.ndarray, k: int) -> Tuple[np.ndarray, np.ndarray]:
 def extract_room_numbers_from_text(texts: List[str]) -> List[str]:
     numbers: List[str] = []
     for t in texts:
-        for match in re.findall(r"\b\d{2,5}\b", t):
+        # MODIFIED: OCR 정규화 추가 — OCR 오탐예: 'O'/'o' -> '0'로 치환
+        # 이전에는 치환이 없었음.
+        norm = t.replace("O", "0").replace("o", "0")
+
+        # MODIFIED: 정규식 변경 — 단어 경계 기반(r"\b\d{2,5}\b")에서
+        # 붙어있는 문자가 있어도 숫자 패턴 r"\d{2,5}"을 모두 추출하도록 수정
+        # (이전: r"\b\d{2,5}\b")
+        for match in re.findall(r"\d{2,5}", norm):
             numbers.append(match)
+
     # unique preserve order
     seen = set()
-    out = []
+    out: List[str] = []
     for n in numbers:
         if n not in seen:
             seen.add(n)
             out.append(n)
+
+    # MODIFIED: 디버깅용 로그 추가 — OCR 원문과 파싱 결과를 남김
+    # (이 라인은 새로 추가된 로깅으로, 필요시 제거 또는 레벨 조정 가능)
+    logger.debug(f"OCR raw texts={texts}, parsed room numbers={out}")
+
     return out
+
 
 
 def ocr_hints(image_path: str) -> List[str]:
@@ -115,7 +129,8 @@ def ocr_hints(image_path: str) -> List[str]:
         logger.warning("easyocr not available; skipping OCR hints")
         return []
     # Use GPU if available to avoid CPU warning and speed up OCR
-    reader = easyocr.Reader(["en"], gpu=torch.cuda.is_available())
+    # MODIFIED: 한글 표지판 인식을 위해 'ko' 추가 (이전: ["en"]) — 한국어+영어 사용
+    reader = easyocr.Reader(["ko", "en"], gpu=torch.cuda.is_available())
     result = reader.readtext(image_path, detail=0)
     return extract_room_numbers_from_text(result)
 
@@ -319,6 +334,8 @@ def localize_image(
     ocr_nums: List[str] = []
     if use_ocr:
         ocr_nums = ocr_hints(image_path)
+        # MODIFIED: OCR 결과 로깅 추가 (이전에는 로깅 없음)
+        logger.info(f"OCR raw nums: {ocr_nums}")
         if ocr_nums:
             for j, ni in enumerate(idx0):
                 nid = int(node_ids[ni])
@@ -377,7 +394,8 @@ def main():
     ap.add_argument("--model", default="ViT-B-32")
     ap.add_argument("--pretrained", default="laion2b_s34b_b79k")
     ap.add_argument("--use_ocr", action="store_true", help="Use OCR re-ranking")
-    ap.add_argument("--node_images_dir", default="node_images", help="Directory of reference node images")
+    # MODIFIED: node_images_dir 기본값 변경 — 이전: "default="node_images"
+    ap.add_argument("--node_images_dir", default="node_images/node_images", help="Directory of reference node images")
     ap.add_argument("--use_geo", action="store_true", help="Use geometric verification re-ranking")
     ap.add_argument("--prev_node", type=int, default=None, help="Previous node id for graph prior")
     ap.add_argument("--w_clip", type=float, default=1.0)
