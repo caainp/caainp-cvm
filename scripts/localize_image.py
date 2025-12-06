@@ -98,16 +98,20 @@ def topk_indices(scores: np.ndarray, k: int) -> Tuple[np.ndarray, np.ndarray]:
 def extract_room_numbers_from_text(texts: List[str]) -> List[str]:
     numbers: List[str] = []
     for t in texts:
+        # Normalize common OCR confusions (e.g., 'O'/'o' mistaken for zero)
+        norm = t.replace("O", "0").replace("o", "0")
         # Capture 2~5 digit sequences even when adjacent to non-digit chars (e.g., "4101호")
-        for match in re.findall(r"(?<!\d)(\d{2,5})(?!\d)", t):
+        for match in re.findall(r"(?<!\d)(\d{2,5})(?!\d)", norm):
             numbers.append(match)
     # unique preserve order
     seen = set()
-    out = []
+    out: List[str] = []
     for n in numbers:
         if n not in seen:
             seen.add(n)
             out.append(n)
+    # Debug logging for OCR parsing
+    logger.debug(f"OCR raw texts={texts}, parsed room numbers={out}")
     return out
 
 
@@ -115,7 +119,8 @@ def ocr_hints(image_path: str, languages: Optional[List[str]] = None) -> List[st
     if easyocr is None:
         logger.warning("easyocr not available; skipping OCR hints")
         return []
-    langs = languages if (languages and len(languages) > 0) else ["en"]
+    # Default to Korean+English when not specified
+    langs = languages if (languages and len(languages) > 0) else ["ko", "en"]
     # Use GPU if available to avoid CPU warning and speed up OCR
     reader = easyocr.Reader(langs, gpu=torch.cuda.is_available())
     result = reader.readtext(image_path, detail=0)
@@ -231,7 +236,8 @@ def ocr_hints_with_roi(
     if easyocr is None:
         logger.warning("easyocr not available; skipping OCR hints")
         return []
-    langs = languages if (languages and len(languages) > 0) else ["en"]
+    # Default to Korean+English when not specified
+    langs = languages if (languages and len(languages) > 0) else ["ko", "en"]
     reader = easyocr.Reader(langs, gpu=torch.cuda.is_available())
     # Run once on full image
     texts: List[str] = []
@@ -517,6 +523,8 @@ def localize_image(
                         ocr_nums = extract_room_numbers_from_text(texts)
                     except Exception:
                         ocr_nums = []
+        # Log recognized OCR numbers for debugging
+        logger.info(f"OCR raw nums: {ocr_nums}")
         if ocr_nums:
             for j, ni in enumerate(idx0):
                 nid = int(node_ids[ni])
@@ -575,7 +583,7 @@ def main():
     ap.add_argument("--model", default="ViT-B-32")
     ap.add_argument("--pretrained", default="laion2b_s34b_b79k")
     ap.add_argument("--use_ocr", action="store_true", help="Use OCR re-ranking")
-    ap.add_argument("--node_images_dir", default="node_images", help="Directory of reference node images")
+    ap.add_argument("--node_images_dir", default="node_images/node_images", help="Directory of reference node images")
     ap.add_argument("--use_geo", action="store_true", help="Use geometric verification re-ranking")
     ap.add_argument("--prev_node", type=int, default=None, help="Previous node id for graph prior")
     ap.add_argument("--w_clip", type=float, default=1.0)
