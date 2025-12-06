@@ -98,7 +98,8 @@ def topk_indices(scores: np.ndarray, k: int) -> Tuple[np.ndarray, np.ndarray]:
 def extract_room_numbers_from_text(texts: List[str]) -> List[str]:
     numbers: List[str] = []
     for t in texts:
-        for match in re.findall(r"\b\d{2,5}\b", t):
+        # Capture 2~5 digit sequences even when adjacent to non-digit chars (e.g., "4101호")
+        for match in re.findall(r"(?<!\d)(\d{2,5})(?!\d)", t):
             numbers.append(match)
     # unique preserve order
     seen = set()
@@ -110,14 +111,152 @@ def extract_room_numbers_from_text(texts: List[str]) -> List[str]:
     return out
 
 
-def ocr_hints(image_path: str) -> List[str]:
+def ocr_hints(image_path: str, languages: Optional[List[str]] = None) -> List[str]:
     if easyocr is None:
         logger.warning("easyocr not available; skipping OCR hints")
         return []
+    langs = languages if (languages and len(languages) > 0) else ["en"]
     # Use GPU if available to avoid CPU warning and speed up OCR
-    reader = easyocr.Reader(["en"], gpu=torch.cuda.is_available())
+    reader = easyocr.Reader(langs, gpu=torch.cuda.is_available())
     result = reader.readtext(image_path, detail=0)
     return extract_room_numbers_from_text(result)
+
+
+def preprocess_image_for_ocr(
+    image_bgr: np.ndarray,
+    use_contrast: bool = False,
+    use_sharpen: bool = False,
+    use_adaptive: bool = False,
+    clahe_clip_limit: float = 2.0,
+    clahe_tile_grid: int = 8,
+    sharpen_amount: float = 0.7,
+    adaptive_block_size: int = 31,
+    adaptive_C: int = 5,
+) -> np.ndarray:
+    """
+    Optional contrast (CLAHE), unsharp mask sharpening, adaptive thresholding for OCR.
+    Returns processed image (single channel if adaptive thresholding applied).
+    """
+    img = image_bgr.copy()
+    if use_contrast:
+        lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+        L, A, B = cv2.split(lab)
+        clahe = cv2.createCLAHE(clipLimit=float(clahe_clip_limit), tileGridSize=(int(clahe_tile_grid), int(clahe_tile_grid)))
+        L = clahe.apply(L)
+        lab = cv2.merge([L, A, B])
+        img = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+    if use_sharpen:
+        blur = cv2.GaussianBlur(img, (0, 0), sigmaX=1.2)
+        img = cv2.addWeighted(img, 1.0 + float(sharpen_amount), blur, -float(sharpen_amount), 0)
+    if use_adaptive:
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        block = int(adaptive_block_size)
+        if block % 2 == 0:
+            block += 1
+        th = cv2.adaptiveThreshold(
+            gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, block, int(adaptive_C)
+        )
+        return th
+    return img
+
+
+def detect_text_rois(
+    image_path: str,
+    max_rois: int = 8,
+    min_area: int = 500,   # pixels
+    max_area: Optional[int] = None,
+) -> List[Tuple[int, int, int, int]]:
+    """
+    Heuristic text ROI detector using morphological gradients.
+    Returns list of (x, y, w, h) sorted by area desc, truncated to max_rois.
+    """
+    img = cv2.imread(image_path)
+    if img is None:
+        return []
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # Enhance text-like structures
+    blackhat = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)))
+    grad = cv2.Sobel(blackhat, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=3)
+    grad = cv2.convertScaleAbs(grad)
+    grad = cv2.GaussianBlur(grad, (3, 3), 0)
+    _, th = cv2.threshold(grad, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    # Close gaps horizontally to merge characters into words/lines
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 3))
+    closed = cv2.morphologyEx(th, cv2.MORPH_CLOSE, kernel, iterations=2)
+    cnts, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    H, W = gray.shape[:2]
+    if max_area is None:
+        max_area = int(0.8 * H * W)
+    rois: List[Tuple[int, int, int, int]] = []
+    for c in cnts:
+        x, y, w, h = cv2.boundingRect(c)
+        area = w * h
+        if area < min_area or area > max_area:
+            continue
+        ar = w / float(h + 1e-6)
+        # Text lines often have 2 <= aspect ratio <= 20; relax to include plates
+        if ar < 1.2 or ar > 25.0:
+            continue
+        # Keep within image bounds
+        x0 = max(0, x - 4); y0 = max(0, y - 4)
+        x1 = min(W, x + w + 4); y1 = min(H, y + h + 4)
+        rois.append((x0, y0, x1 - x0, y1 - y0))
+    # Sort by area desc and deduplicate overlapping boxes
+    rois = sorted(rois, key=lambda r: r[2] * r[3], reverse=True)
+    filtered: List[Tuple[int, int, int, int]] = []
+    def iou(a, b) -> float:
+        ax, ay, aw, ah = a; bx, by, bw, bh = b
+        ax2, ay2 = ax + aw, ay + ah; bx2, by2 = bx + bw, by + bh
+        inter_x1, inter_y1 = max(ax, bx), max(ay, by)
+        inter_x2, inter_y2 = min(ax2, bx2), min(ay2, by2)
+        iw, ih = max(0, inter_x2 - inter_x1), max(0, inter_y2 - inter_y1)
+        inter = iw * ih
+        union = aw * ah + bw * bh - inter + 1e-6
+        return inter / union
+    for r in rois:
+        if all(iou(r, f) < 0.3 for f in filtered):
+            filtered.append(r)
+        if len(filtered) >= max_rois:
+            break
+    return filtered
+
+
+def ocr_hints_with_roi(
+    image_path: str,
+    languages: Optional[List[str]] = None,
+    max_rois: int = 8,
+    readtext_kwargs: Optional[Dict[str, any]] = None,
+    preproc_opts: Optional[Dict[str, any]] = None,
+) -> List[str]:
+    if easyocr is None:
+        logger.warning("easyocr not available; skipping OCR hints")
+        return []
+    langs = languages if (languages and len(languages) > 0) else ["en"]
+    reader = easyocr.Reader(langs, gpu=torch.cuda.is_available())
+    # Run once on full image
+    texts: List[str] = []
+    try:
+        img_full = cv2.imread(image_path)
+        if img_full is not None and preproc_opts is not None:
+            img_full = preprocess_image_for_ocr(img_full, **preproc_opts)
+            texts.extend(reader.readtext(img_full, detail=0, **(readtext_kwargs or {})) or [])
+        else:
+            texts.extend(reader.readtext(image_path, detail=0, **(readtext_kwargs or {})) or [])
+    except Exception:
+        pass
+    # Then on candidate ROIs
+    rois = detect_text_rois(image_path, max_rois=max_rois)
+    img = cv2.imread(image_path)
+    if img is not None:
+        for (x, y, w, h) in rois:
+            crop = img[y:y+h, x:x+w]
+            try:
+                if preproc_opts is not None:
+                    crop = preprocess_image_for_ocr(crop, **preproc_opts)
+                texts.extend(reader.readtext(crop, detail=0, **(readtext_kwargs or {})) or [])
+            except Exception:
+                continue
+    return extract_room_numbers_from_text(texts)
 
 
 def parse_room_range(value: Optional[str]) -> List[Tuple[int, int]]:
@@ -275,6 +414,24 @@ def localize_image(
     w_geo: float = 0.4,
     w_prior: float = 0.2,
     auto_match_model: bool = True,
+    ocr_langs: Optional[List[str]] = None,
+    ocr_use_roi: bool = False,
+    ocr_max_rois: int = 8,
+    # OCR preprocessing flags
+    ocr_contrast: bool = False,
+    ocr_sharpen: bool = False,
+    ocr_adaptive: bool = False,
+    ocr_clahe_clip: float = 2.0,
+    ocr_clahe_grid: int = 8,
+    ocr_sharpen_amount: float = 0.7,
+    ocr_adaptive_block: int = 31,
+    ocr_adaptive_C: int = 5,
+    # EasyOCR readtext tuning
+    ocr_text_threshold: Optional[float] = None,
+    ocr_low_text: Optional[float] = None,
+    ocr_link_threshold: Optional[float] = None,
+    ocr_decoder: Optional[str] = None,
+    ocr_beam_width: Optional[int] = None,
 ) -> dict:
     # load map
     graph, node_records, emb_matrix, node_ids = load_map_csv(csv_path)
@@ -318,7 +475,48 @@ def localize_image(
     ocr_adj = np.zeros_like(vals0)
     ocr_nums: List[str] = []
     if use_ocr:
-        ocr_nums = ocr_hints(image_path)
+        preproc_opts = {
+            "use_contrast": bool(ocr_contrast),
+            "use_sharpen": bool(ocr_sharpen),
+            "use_adaptive": bool(ocr_adaptive),
+            "clahe_clip_limit": float(ocr_clahe_clip),
+            "clahe_tile_grid": int(ocr_clahe_grid),
+            "sharpen_amount": float(ocr_sharpen_amount),
+            "adaptive_block_size": int(ocr_adaptive_block),
+            "adaptive_C": int(ocr_adaptive_C),
+        }
+        readtext_kwargs: Dict[str, any] = {}
+        if ocr_text_threshold is not None:
+            readtext_kwargs["text_threshold"] = float(ocr_text_threshold)
+        if ocr_low_text is not None:
+            readtext_kwargs["low_text"] = float(ocr_low_text)
+        if ocr_link_threshold is not None:
+            readtext_kwargs["link_threshold"] = float(ocr_link_threshold)
+        if ocr_decoder is not None:
+            readtext_kwargs["decoder"] = str(ocr_decoder)
+        if ocr_beam_width is not None:
+            readtext_kwargs["beamWidth"] = int(ocr_beam_width)
+        if ocr_use_roi:
+            ocr_nums = ocr_hints_with_roi(
+                image_path,
+                languages=ocr_langs,
+                max_rois=ocr_max_rois,
+                readtext_kwargs=readtext_kwargs,
+                preproc_opts=preproc_opts,
+            )
+        else:
+            if easyocr is None:
+                logger.warning("easyocr not available; skipping OCR hints")
+            else:
+                reader = easyocr.Reader(ocr_langs or ["en"], gpu=torch.cuda.is_available())
+                img_full = cv2.imread(image_path)
+                if img_full is not None:
+                    img_full = preprocess_image_for_ocr(img_full, **preproc_opts)
+                    try:
+                        texts = reader.readtext(img_full, detail=0, **readtext_kwargs) or []
+                        ocr_nums = extract_room_numbers_from_text(texts)
+                    except Exception:
+                        ocr_nums = []
         if ocr_nums:
             for j, ni in enumerate(idx0):
                 nid = int(node_ids[ni])
@@ -384,10 +582,29 @@ def main():
     ap.add_argument("--w_ocr", type=float, default=0.3)
     ap.add_argument("--w_geo", type=float, default=0.4)
     ap.add_argument("--w_prior", type=float, default=0.2)
+    ap.add_argument("--ocr_langs", default="en", help="Comma-separated OCR languages for easyocr (e.g., 'ko,en')")
+    ap.add_argument("--ocr_use_roi", action="store_true", help="Enable ROI-based OCR (detect text regions then OCR crops)")
+    ap.add_argument("--ocr_max_rois", type=int, default=8, help="Max number of OCR ROIs to try")
+    # OCR preprocessing flags
+    ap.add_argument("--ocr_contrast", action="store_true", help="Enable CLAHE contrast enhancement for OCR")
+    ap.add_argument("--ocr_sharpen", action="store_true", help="Enable unsharp mask sharpening for OCR")
+    ap.add_argument("--ocr_adaptive", action="store_true", help="Enable adaptive thresholding for OCR")
+    ap.add_argument("--ocr_clahe_clip", type=float, default=2.0, help="CLAHE clip limit")
+    ap.add_argument("--ocr_clahe_grid", type=int, default=8, help="CLAHE tile grid size")
+    ap.add_argument("--ocr_sharpen_amount", type=float, default=0.7, help="Unsharp mask amount")
+    ap.add_argument("--ocr_adaptive_block", type=int, default=31, help="Adaptive threshold block size (odd)")
+    ap.add_argument("--ocr_adaptive_C", type=int, default=5, help="Adaptive threshold C value (subtracted)")
+    # EasyOCR readtext tuning
+    ap.add_argument("--ocr_text_threshold", type=float, default=None, help="EasyOCR text_threshold")
+    ap.add_argument("--ocr_low_text", type=float, default=None, help="EasyOCR low_text")
+    ap.add_argument("--ocr_link_threshold", type=float, default=None, help="EasyOCR link_threshold")
+    ap.add_argument("--ocr_decoder", type=str, default=None, help="EasyOCR decoder (greedy or beamsearch)")
+    ap.add_argument("--ocr_beam_width", type=int, default=None, help="EasyOCR beamWidth for beamsearch")
     args = ap.parse_args()
 
     device = "cuda" if args.device.startswith("cuda") and torch.cuda.is_available() else "cpu"
     logger.info(f"Using device={device}")
+    ocr_langs = [s.strip() for s in args.ocr_langs.split(",") if s.strip()] if hasattr(args, "ocr_langs") and args.ocr_langs else None
     out = localize_image(
         image_path=args.image,
         csv_path=args.csv,
@@ -403,6 +620,22 @@ def main():
         w_ocr=args.w_ocr,
         w_geo=args.w_geo,
         w_prior=args.w_prior,
+        ocr_langs=ocr_langs,
+        ocr_use_roi=bool(getattr(args, "ocr_use_roi", False)),
+        ocr_max_rois=int(getattr(args, "ocr_max_rois", 8)),
+        ocr_contrast=bool(getattr(args, "ocr_contrast", False)),
+        ocr_sharpen=bool(getattr(args, "ocr_sharpen", False)),
+        ocr_adaptive=bool(getattr(args, "ocr_adaptive", False)),
+        ocr_clahe_clip=float(getattr(args, "ocr_clahe_clip", 2.0)),
+        ocr_clahe_grid=int(getattr(args, "ocr_clahe_grid", 8)),
+        ocr_sharpen_amount=float(getattr(args, "ocr_sharpen_amount", 0.7)),
+        ocr_adaptive_block=int(getattr(args, "ocr_adaptive_block", 31)),
+        ocr_adaptive_C=int(getattr(args, "ocr_adaptive_C", 5)),
+        ocr_text_threshold=getattr(args, "ocr_text_threshold", None),
+        ocr_low_text=getattr(args, "ocr_low_text", None),
+        ocr_link_threshold=getattr(args, "ocr_link_threshold", None),
+        ocr_decoder=getattr(args, "ocr_decoder", None),
+        ocr_beam_width=getattr(args, "ocr_beam_width", None),
     )
     print(out)
 
