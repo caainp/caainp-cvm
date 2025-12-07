@@ -82,9 +82,6 @@ def make_route_summary(plan: PlanState) -> Dict[str, Any]:
     total_steps = len(plan.steps)
 
     # remaining_steps_text 예시: "엘리베이터 → 4층 410호 → 7층 7201호"
-    # 여기서는 각 step의 target_rooms 또는 설명 필드를 사용하면 좋음.
-    # PlanState 구조를 모르겠으면 일단 step_id만 이어 붙여도 되고,
-    # 나중에 방 번호 등으로 교체해도 됨.
 
     remaining_step_objs = plan.steps[current_step - 1 :]
 
@@ -163,8 +160,7 @@ def compute_nav_output(image_path: str,
     if neighbors:
         # value가 가장 큰 이웃 하나 선택
         next_node = int(max(neighbors.items(), key=lambda kv: kv[1])[0])
-
-    # 2) CSM: PlanState 객체 복원 후 현재 노드로 상태 업데이트
+    
     # 2) CSM: JSON → PlanState 복원 단계는 건너뛰고,
     #    이미 들고 있는 plan 객체를 그대로 업데이트
     update_state_with_node(plan, current_node=current_node, stay_frames=2)
