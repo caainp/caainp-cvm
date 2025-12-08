@@ -9,11 +9,11 @@ import networkx as nx
 
 from scripts.map_loader import load_map_csv
 from scripts.value_map import build_value_map
+from caainp_cvm import _get_csv_path
 
 def main() -> None:
     # 1) Resolve CSV path (repo root is the parent directory of this script)
-    root_dir = Path(__file__).resolve().parents[1]
-    csv_path = root_dir / "ai_4f_node_map_fixed_embeded.csv"
+    csv_path = _get_csv_path()
 
     print(f"[INFO] CSV path: {csv_path}")
 

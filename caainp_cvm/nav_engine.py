@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
+from . import _get_csv_path, _get_node_images_dir
 
 import sys
 
@@ -13,7 +14,7 @@ try:
 except Exception:
     torch = None
     DEFAULT_DEVICE = "cpu"
-
+    
 # -----------------------------
 # 0. 경로 설정 (nav_demo와 거의 동일)
 # -----------------------------
@@ -30,8 +31,8 @@ from caainp_csm.plan_csm import create_simple_plan, update_state_with_node, Plan
 from scripts.run_cvm_step import run_cvm_step
 
 
-CSV_PATH = CVM_ROOT / "ai_4f_node_map_fixed_embeded.csv"
-NODE_IMAGES_DIR = CVM_ROOT / "node_images" / "node_images"
+CSV_PATH = _get_csv_path()
+NODE_IMAGES_DIR = _get_node_images_dir()
 
 def init_plan(user_text: str, start_room: int) -> Tuple[PlanState, str]:
     """

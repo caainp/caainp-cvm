@@ -30,6 +30,7 @@ print("[DEBUG] CVM_ROOT =", CVM_ROOT)
 from caainp_csm.graph_4f import Graph4F
 from caainp_csm.plan_csm import create_simple_plan, update_state_with_node
 from scripts.run_cvm_step import run_cvm_step
+from caainp_cvm import _get_csv_path, _get_node_images_dir
 
 # -----------------------------
 # 2. 헬퍼: 텍스트 → 플랜
@@ -38,7 +39,7 @@ def make_plan_from_text(user_text: str, start_room: int):
     """
     사용자 자연어 + 시작 방번호 → (PlanState, plan_json, csv_path)
     """
-    csv_path = CVM_ROOT / "ai_4f_node_map_fixed_embeded.csv"
+    csv_path = _get_csv_path()
     g = Graph4F(str(csv_path))
     plan = create_simple_plan(user_text, g, start_room=start_room)
     return plan, plan.to_json(), csv_path
@@ -48,7 +49,7 @@ def make_plan_from_text(user_text: str, start_room: int):
 # 3. 데모 메인 루프
 # -----------------------------
 def main():
-    node_images_dir = CVM_ROOT / "node_images/node_images"
+    node_images_dir = _get_node_images_dir()
 
     # 1) CSM: 유저 요청으로 플랜 생성
     user_text = "401에서 410호까지 가기"

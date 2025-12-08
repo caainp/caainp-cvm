@@ -35,3 +35,7 @@ caainp-csm = { git = "https://github.com/caainp/caainp-csm.git" }
 
 [tool.hatch.build.targets.wheel]
 packages = ["caainp_cvm", "scripts"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"ai_4f_node_map_fixed_embeded.csv" = "caainp_cvm/data/ai_4f_node_map_fixed_embeded.csv"
+"node_images/node_images" = "caainp_cvm/data/node_images"
