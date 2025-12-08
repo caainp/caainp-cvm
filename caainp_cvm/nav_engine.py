@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
-from . import _get_csv_path, _get_node_images_dir
+from .paths import _get_csv_path, _get_node_images_dir
 
 import sys
 
