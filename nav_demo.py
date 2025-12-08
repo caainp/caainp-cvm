@@ -10,23 +10,26 @@ from pprint import pprint
 THIS_DIR = Path(__file__).resolve().parent       # ...\nav\caainp-cvm
 NAV_DIR = THIS_DIR.parent                        # ...\nav
 
-CSM_SRC = NAV_DIR / "caainp-csm" / "src"         # graph_4f.py, plan_csm.py 있는 곳
+# CSM_SRC = NAV_DIR / "caainp-csm" / "src"         # graph_4f.py, plan_csm.py 있는 곳
 CVM_ROOT = THIS_DIR                              # caainp-cvm 루트
 
 # import 경로에 추가
-sys.path.append(str(CSM_SRC))
+# sys.path.append(str(CSM_SRC))
 sys.path.append(str(CVM_ROOT))
 
-print("[DEBUG] CSM_SRC =", CSM_SRC)
+# print("[DEBUG] CSM_SRC =", CSM_SRC)
 print("[DEBUG] CVM_ROOT =", CVM_ROOT)
 
 # -----------------------------
 # 1. CSM / CVM 모듈 import
 # -----------------------------
-from graph_4f import Graph4F
-from plan_csm import create_simple_plan, update_state_with_node
-from scripts.run_cvm_step import run_cvm_step
+# from graph_4f import Graph4F
+# from plan_csm import create_simple_plan, update_state_with_node
 
+# 패키지로 변경
+from caainp_csm.graph_4f import Graph4F
+from caainp_csm.plan_csm import create_simple_plan, update_state_with_node
+from scripts.run_cvm_step import run_cvm_step
 
 # -----------------------------
 # 2. 헬퍼: 텍스트 → 플랜

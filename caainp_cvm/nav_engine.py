@@ -17,17 +17,15 @@ except Exception:
 # -----------------------------
 # 0. 경로 설정 (nav_demo와 거의 동일)
 # -----------------------------
-THIS_DIR = Path(__file__).resolve().parent      # .../caainp-cvm
-NAV_DIR = THIS_DIR.parent                       # .../nav (csm repo가 같이 있을 때 기준)
+THIS_DIR = Path(__file__).resolve().parent      # .../caainp_cvm (패키지 폴더)
+CVM_ROOT = THIS_DIR.parent                      # .../caainp-cvm (프로젝트 루트)
 
-CSM_SRC = NAV_DIR / "caainp-csm" / "src"        # graph_4f.py, plan_csm.py 있는 곳
-CVM_ROOT = THIS_DIR                             # caainp-cvm 루트
-
-sys.path.append(str(CSM_SRC))
 sys.path.append(str(CVM_ROOT))
 
-from graph_4f import Graph4F
-from plan_csm import create_simple_plan, update_state_with_node, PlanState
+# from graph_4f import Graph4F
+from caainp_csm.graph_4f import Graph4F
+# from plan_csm import create_simple_plan, update_state_with_node, PlanState
+from caainp_csm.plan_csm import create_simple_plan, update_state_with_node, PlanState
 from scripts.run_cvm_step import run_cvm_step
 
 

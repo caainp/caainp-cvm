@@ -1,0 +1,19 @@
+[project]
+name = "caainp-cvm"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "caainp-csm",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv.sources]
+caainp-csm = { git = "https://github.com/caainp/caainp-csm.git" }
+
+[tool.hatch.build.targets.wheel]
+packages = ["caainp_cvm"]
