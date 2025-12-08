@@ -32,6 +32,12 @@ build-backend = "hatchling.build"
 
 [tool.uv.sources]
 caainp-csm = { git = "https://github.com/caainp/caainp-csm.git" }
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["caainp_cvm", "scripts"]
