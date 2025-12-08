@@ -4,7 +4,6 @@ from pathlib import Path
 
 from pdfminer.high_level import extract_text
 
-
 def extract_pdf_text(pdf_file_path: Path) -> str:
     if not pdf_file_path.exists():
         raise FileNotFoundError(f"PDF not found: {pdf_file_path}")

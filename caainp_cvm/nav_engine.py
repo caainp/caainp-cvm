@@ -20,7 +20,8 @@ except Exception:
 THIS_DIR = Path(__file__).resolve().parent      # .../caainp_cvm (패키지 폴더)
 CVM_ROOT = THIS_DIR.parent                      # .../caainp-cvm (프로젝트 루트)
 
-sys.path.append(str(CVM_ROOT))
+if str(CVM_ROOT) not in sys.path:
+    sys.path.insert(0, str(CVM_ROOT))
 
 # from graph_4f import Graph4F
 from caainp_csm.graph_4f import Graph4F

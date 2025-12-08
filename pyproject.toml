@@ -16,4 +16,4 @@ build-backend = "hatchling.build"
 caainp-csm = { git = "https://github.com/caainp/caainp-csm.git" }
 
 [tool.hatch.build.targets.wheel]
-packages = ["caainp_cvm"]
+packages = ["caainp_cvm", "scripts"]
