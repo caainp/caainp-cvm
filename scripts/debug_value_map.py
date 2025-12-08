@@ -7,14 +7,8 @@ from pprint import pprint
 
 import networkx as nx
 
-# Support both execution from repo root and from scripts/ directory
-try:
-    from scripts.map_loader import load_map_csv  # when run from repo root
-    from scripts.value_map import build_value_map
-except ImportError:
-    from map_loader import load_map_csv          # when run from scripts/
-    from value_map import build_value_map
-
+from scripts.map_loader import load_map_csv
+from scripts.value_map import build_value_map
 
 def main() -> None:
     # 1) Resolve CSV path (repo root is the parent directory of this script)

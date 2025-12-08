@@ -6,19 +6,10 @@ from typing import Any, Dict, List, Tuple, Optional
 from pathlib import Path
 from pprint import pprint
 import json
-
-# Import local modules (when running via `python -m scripts.run_cvm_step`)
-try:
-    from scripts.localize_image import localize_image  # type: ignore
-    from scripts.map_loader import load_map_csv        # type: ignore
-    from scripts.value_map import build_value_map_v2   # type: ignore
-except ImportError:
-    # Fallback for running directly inside the scripts folder
-    from localize_image import localize_image          # type: ignore
-    from map_loader import load_map_csv                # type: ignore
-    from value_map import build_value_map              # type: ignore
-
-
+ 
+from scripts.localize_image import localize_image
+from scripts.map_loader import load_map_csv
+from scripts.value_map import build_value_map_v2
 # -------------------------------------------------------------------
 # 1. Extract route/target information from a CSM plan JSON
 # -------------------------------------------------------------------

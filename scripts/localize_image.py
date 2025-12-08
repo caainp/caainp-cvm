@@ -18,11 +18,7 @@ try:
 except Exception:
     easyocr = None
 
-# Support running as a module (-m scripts.localize_image) and as a file (python scripts/localize_image.py)
-try:
-    from scripts.map_loader import load_map_csv  # type: ignore
-except Exception:
-    from map_loader import load_map_csv  # type: ignore
+from scripts.map_loader import load_map_csv
 
 # Reduce noisy warnings and avoid symlink warning on Windows
 os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
