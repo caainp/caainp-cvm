@@ -123,8 +123,6 @@ localize_image(
 
 ---
 
-
-
 ## 📊 현재 구현 상세 분석
 
 ### CVM 모듈의 핵심 알고리즘
@@ -241,3 +239,5 @@ python -m scripts.evaluate_cvm \
 ### 4. 온도 스케일링
 - Softmax에 온도 파라미터 적용
 - Confidence 계산의 안정성 향상
+
+---
