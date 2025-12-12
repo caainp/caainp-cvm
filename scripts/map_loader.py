@@ -17,6 +17,8 @@ class NodeRecord:
     neighbors: List[int]
     node_type: Optional[str]
     clip_embedding: Optional[np.ndarray]
+    x: Optional[float]
+    y: Optional[float]
     extra: Dict[str, Any]
 
 
@@ -124,6 +126,8 @@ def load_map_csv(
     neighbors_column: str = "neighbors",
     type_column: str = "type",
     embedding_column: str = "clip_embedding",
+    x_column: str = "x",
+    y_column: str = "y",
 ) -> Tuple[nx.Graph, Dict[int, NodeRecord], np.ndarray, List[int]]:
     """
     Load CSV and build:
@@ -158,6 +162,17 @@ def load_map_csv(
         floor_val = row.get(floor_column, None)
         desc_val = row.get(description_col, None) if description_col else None
         type_val = row.get(type_column, None)
+        # Coordinates (optional)
+        x_val = row.get(x_column, None)
+        y_val = row.get(y_column, None)
+        try:
+            x_f = float(x_val) if (x_val is not None and pd.notna(x_val)) else None
+        except Exception:
+            x_f = None
+        try:
+            y_f = float(y_val) if (y_val is not None and pd.notna(y_val)) else None
+        except Exception:
+            y_f = None
 
         neighbors_val = _parse_neighbors(row.get(neighbors_column, None))
         emb = _parse_embedding(row.get(embedding_column, None)) if embedding_column in cols else None
@@ -165,7 +180,7 @@ def load_map_csv(
         # capture extras
         extra: Dict[str, Any] = {}
         for c in cols:
-            if c in {id_column, floor_column, neighbors_column, type_column, embedding_column}:
+            if c in {id_column, floor_column, neighbors_column, type_column, embedding_column, x_column, y_column}:
                 continue
             if description_col and c == description_col:
                 continue
@@ -178,10 +193,15 @@ def load_map_csv(
             neighbors=neighbors_val,
             node_type=str(type_val) if (type_val is not None and pd.notna(type_val)) else None,
             clip_embedding=emb,
+            x=x_f,
+            y=y_f,
             extra=extra,
         )
         node_records[node_id] = rec
-        graph.add_node(node_id, floor=rec.floor, type=rec.node_type, description=rec.description, **rec.extra)
+        node_attrs = {"floor": rec.floor, "type": rec.node_type, "description": rec.description}
+        if rec.x is not None and rec.y is not None:
+            node_attrs.update({"x": float(rec.x), "y": float(rec.y)})
+        graph.add_node(node_id, **node_attrs, **rec.extra)
 
     # add edges (undirected)
     for node_id, rec in node_records.items():
