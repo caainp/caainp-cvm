@@ -94,9 +94,9 @@ CVM exchanges standardized data with CSM and NAV modules.
 {
   "current_node": 4102,
   "neighbors": {
-    "4101": 0.9, // High score: On-route & Visually consistent
-    "4103": 0.2, // Low score: Off-route
-    "4001": 0.0 // Blocked: Obstacle detected
+    "4101": 0.9, 
+    "4103": 0.2, 
+    "4001": 0.0 
   }
 }
 ```
