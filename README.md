@@ -183,5 +183,5 @@ Output: Displays the estimated `current_node` and the calculated `value_map` sco
 
 ## Related Projects
 
-- **CSM (Constraint-Aware Sub-instruction Manager)**: [Link to Repository]  
+- **CSM (Constraint-Aware Sub-instruction Manager)**: [Link to Repository](https://github.com/caainp/caainp-csm)  
   The logic brain that provides the route plan (`route_nodes`) to this module.
