@@ -1,0 +1,2 @@
+﻿image,filename,gt_node,angle,variant,pred_node,confidence,top1_correct,top3_hit,top5_hit,gt_rank,mrr,graph_distance,dist_le_1,dist_le_2,ocr_numbers,candidate_nodes,error
+benchmarks\room_test_60deg\401_L.jpg,401_L.jpg,401,L,,4170,0.221179,0,0,0,,0.0,4,0,0,,"[4170, 427, 431, 408, 430]",

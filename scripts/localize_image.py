@@ -95,25 +95,97 @@ def topk_indices(scores: np.ndarray, k: int) -> Tuple[np.ndarray, np.ndarray]:
     return idx, scores[idx]
 
 
+# =============================================================================
+# [Patch 1] OCR 숫자 정규화 + 도메인 필터
+#
+# 목적:
+# - 잡음 숫자를 필터링 하기 위한 도메인 필터를 넣는다.
+# - O→0, I/l→1, S→5 같은 OCR 혼동 정규화를 같이 수행한다.
+# - 앞뒤 한글/기호를 제거하고 숫자 후보만 추출한다.
+# - 현재 노드맵 범위(4xx ~ 4xxx 중심)를 반영하되,
+#   이후 node map 수정 가능성을 고려해 범위를 약간 넓게 둔다.
+# =============================================================================
+
+import re
+from typing import List
+
+OCR_DOMAIN_MIN = 350
+OCR_DOMAIN_MAX = 5999
+OCR_ALLOWED_LEADING_DIGITS = {"4", "5"}
+OCR_VALID_LENGTHS = {3, 4}
+
+OCR_CHAR_NORMALIZATION = str.maketrans({
+    "O": "0", "o": "0", "Q": "0", "D": "0",
+    "I": "1", "l": "1", "|": "1", "!": "1",
+    "S": "5", "s": "5",
+    "B": "8", "Z": "2",
+})
+
+
+def _normalize_ocr_text(raw_text: str) -> str:
+    """OCR 원문을 숫자 추출에 유리한 형태로 정규화한다."""
+    s = str(raw_text).strip()
+    s = s.translate(OCR_CHAR_NORMALIZATION)
+    s = re.sub(r"[가-힣]+", " ", s)
+    s = re.sub(r"[^0-9A-Za-z\s]", " ", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+
+def _extract_numeric_candidates(normalized_text: str) -> List[str]:
+    """정규화된 텍스트에서 숫자 후보를 추출한다."""
+    candidates: List[str] = []
+    candidates.extend(re.findall(r"\d{2,6}", normalized_text))
+    for tok in normalized_text.split():
+        digits_only = re.sub(r"\D", "", tok)
+        if 2 <= len(digits_only) <= 6:
+            candidates.append(digits_only)
+    return candidates
+
+
+def _canonicalize_number_string(num_str: str) -> str:
+    """앞쪽 0 제거 후 canonical 문자열 반환."""
+    s = str(num_str).strip().lstrip("0")
+    return s if s else "0"
+
+
+def _is_plausible_domain_number(num_str: str) -> bool:
+    """프로젝트 도메인 범위 내 숫자인지 검사."""
+    s = _canonicalize_number_string(num_str)
+    if len(s) not in OCR_VALID_LENGTHS:
+        return False
+    if s[0] not in OCR_ALLOWED_LEADING_DIGITS:
+        return False
+    try:
+        v = int(s)
+    except:
+        return False
+    return OCR_DOMAIN_MIN <= v <= OCR_DOMAIN_MAX
+
+
 def extract_room_numbers_from_text(texts: List[str]) -> List[str]:
-    numbers: List[str] = []
+    """OCR raw texts -> 정규화 + 도메인 필터 -> room/node 숫자 후보 리스트 반환"""
+    filtered_candidates: List[str] = []
+
     for t in texts:
-        # Normalize common OCR confusions (e.g., 'O'/'o' mistaken for zero)
-        norm = t.replace("O", "0").replace("o", "0")
-        # Capture 2~5 digit sequences even when adjacent to non-digit chars (e.g., "4101호")
-        for match in re.findall(r"(?<!\d)(\d{2,5})(?!\d)", norm):
-            numbers.append(match)
-    # unique preserve order
+        norm = _normalize_ocr_text(t)
+        cands = _extract_numeric_candidates(norm)
+        for c in cands:
+            c = _canonicalize_number_string(c)
+            if _is_plausible_domain_number(c):
+                filtered_candidates.append(c)
+
+    # 중복 제거 (순서 유지)
     seen = set()
     out: List[str] = []
-    for n in numbers:
+    for n in filtered_candidates:
         if n not in seen:
             seen.add(n)
             out.append(n)
-    # Debug logging for OCR parsing
-    logger.debug(f"OCR raw texts={texts}, parsed room numbers={out}")
-    return out
 
+    # logger 설정이 되어 있다면 디버깅 로그를 남깁니다.
+    # logger.debug(f"filtered_room_numbers={out}")
+    return out
 
 def ocr_hints(image_path: str, languages: Optional[List[str]] = None) -> List[str]:
     if easyocr is None:
