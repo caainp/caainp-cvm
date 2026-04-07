@@ -205,6 +205,8 @@ def main() -> None:
     ap.add_argument("--ocr_use_roi", action="store_true")
     ap.add_argument("--ocr_max_rois", type=int, default=8)
 
+    ap.add_argument("--ocr_grayscale", action="store_true")
+    ap.add_argument("--ocr_upscale", type=float, default=1.0)
     ap.add_argument("--ocr_contrast", action="store_true")
     ap.add_argument("--ocr_sharpen", action="store_true")
     ap.add_argument("--ocr_adaptive", action="store_true")
@@ -290,6 +292,8 @@ def main() -> None:
                 ocr_langs=ocr_langs,
                 ocr_use_roi=bool(args.ocr_use_roi),
                 ocr_max_rois=int(args.ocr_max_rois),
+                ocr_grayscale=bool(args.ocr_grayscale),
+                ocr_upscale=float(args.ocr_upscale),
                 ocr_contrast=bool(args.ocr_contrast),
                 ocr_sharpen=bool(args.ocr_sharpen),
                 ocr_adaptive=bool(args.ocr_adaptive),
@@ -432,6 +436,8 @@ def main() -> None:
             "ocr_langs": ocr_langs,
             "ocr_use_roi": bool(args.ocr_use_roi),
             "ocr_max_rois": int(args.ocr_max_rois),
+            "ocr_grayscale": bool(args.ocr_grayscale),
+            "ocr_upscale": float(args.ocr_upscale),
             "ocr_contrast": bool(args.ocr_contrast),
             "ocr_sharpen": bool(args.ocr_sharpen),
             "ocr_adaptive": bool(args.ocr_adaptive),

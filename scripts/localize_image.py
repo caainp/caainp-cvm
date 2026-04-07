@@ -201,6 +201,8 @@ def ocr_hints(image_path: str, languages: Optional[List[str]] = None) -> List[st
 
 def preprocess_image_for_ocr(
     image_bgr: np.ndarray,
+    use_grayscale: bool = False,
+    upscale_factor: float = 1.0,
     use_contrast: bool = False,
     use_sharpen: bool = False,
     use_adaptive: bool = False,
@@ -211,29 +213,83 @@ def preprocess_image_for_ocr(
     adaptive_C: int = 5,
 ) -> np.ndarray:
     """
-    Optional contrast (CLAHE), unsharp mask sharpening, adaptive thresholding for OCR.
-    Returns processed image (single channel if adaptive thresholding applied).
+    OCR 전처리:
+    - grayscale
+    - upscale
+    - CLAHE contrast
+    - sharpen
+    - adaptive threshold
+
+    반환:
+    - 일반 전처리면 BGR 또는 Gray image
+    - adaptive threshold 사용 시 binary(gray) image
     """
     img = image_bgr.copy()
+
+    # 1) grayscale
+    if use_grayscale:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # 2) upscale
+    if upscale_factor is not None and float(upscale_factor) > 1.0:
+        scale = float(upscale_factor)
+        h, w = img.shape[:2]
+        new_w = max(1, int(round(w * scale)))
+        new_h = max(1, int(round(h * scale)))
+        interp = cv2.INTER_CUBIC if scale >= 1.5 else cv2.INTER_LINEAR
+        img = cv2.resize(img, (new_w, new_h), interpolation=interp)
+
+    # 3) contrast (CLAHE)
     if use_contrast:
-        lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
-        L, A, B = cv2.split(lab)
-        clahe = cv2.createCLAHE(clipLimit=float(clahe_clip_limit), tileGridSize=(int(clahe_tile_grid), int(clahe_tile_grid)))
-        L = clahe.apply(L)
-        lab = cv2.merge([L, A, B])
-        img = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+        if len(img.shape) == 2:
+            clahe = cv2.createCLAHE(
+                clipLimit=float(clahe_clip_limit),
+                tileGridSize=(int(clahe_tile_grid), int(clahe_tile_grid)),
+            )
+            img = clahe.apply(img)
+        else:
+            lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+            L, A, B = cv2.split(lab)
+            clahe = cv2.createCLAHE(
+                clipLimit=float(clahe_clip_limit),
+                tileGridSize=(int(clahe_tile_grid), int(clahe_tile_grid)),
+            )
+            L = clahe.apply(L)
+            lab = cv2.merge([L, A, B])
+            img = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+
+    # 4) sharpen
     if use_sharpen:
         blur = cv2.GaussianBlur(img, (0, 0), sigmaX=1.2)
-        img = cv2.addWeighted(img, 1.0 + float(sharpen_amount), blur, -float(sharpen_amount), 0)
+        img = cv2.addWeighted(
+            img,
+            1.0 + float(sharpen_amount),
+            blur,
+            -float(sharpen_amount),
+            0,
+        )
+
+    # 5) adaptive threshold
     if use_adaptive:
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        if len(img.shape) == 3:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = img
+
         block = int(adaptive_block_size)
         if block % 2 == 0:
             block += 1
+
         th = cv2.adaptiveThreshold(
-            gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, block, int(adaptive_C)
+            gray,
+            255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY,
+            block,
+            int(adaptive_C),
         )
         return th
+
     return img
 
 
@@ -496,6 +552,8 @@ def localize_image(
     ocr_use_roi: bool = False,
     ocr_max_rois: int = 8,
     # OCR preprocessing flags
+    ocr_grayscale: bool = False,
+    ocr_upscale: float = 1.0,
     ocr_contrast: bool = False,
     ocr_sharpen: bool = False,
     ocr_adaptive: bool = False,
@@ -554,6 +612,8 @@ def localize_image(
     ocr_nums: List[str] = []
     if use_ocr:
         preproc_opts = {
+            "use_grayscale": bool(ocr_grayscale),
+            "upscale_factor": float(ocr_upscale),
             "use_contrast": bool(ocr_contrast),
             "use_sharpen": bool(ocr_sharpen),
             "use_adaptive": bool(ocr_adaptive),
@@ -666,6 +726,8 @@ def main():
     ap.add_argument("--ocr_use_roi", action="store_true", help="Enable ROI-based OCR (detect text regions then OCR crops)")
     ap.add_argument("--ocr_max_rois", type=int, default=8, help="Max number of OCR ROIs to try")
     # OCR preprocessing flags
+    ap.add_argument("--ocr_grayscale", action="store_true", help="Enable grayscale preprocessing for OCR")
+    ap.add_argument("--ocr_upscale", type=float, default=1.0, help="Upscale factor for OCR preprocessing (e.g. 2.0)")
     ap.add_argument("--ocr_contrast", action="store_true", help="Enable CLAHE contrast enhancement for OCR")
     ap.add_argument("--ocr_sharpen", action="store_true", help="Enable unsharp mask sharpening for OCR")
     ap.add_argument("--ocr_adaptive", action="store_true", help="Enable adaptive thresholding for OCR")
