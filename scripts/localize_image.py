@@ -3,7 +3,7 @@ import glob
 import os
 import re
 import warnings
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 
 import numpy as np
 from PIL import Image
@@ -293,103 +293,211 @@ def preprocess_image_for_ocr(
     return img
 
 
+def _expand_roi(
+    x: int,
+    y: int,
+    w: int,
+    h: int,
+    img_w: int,
+    img_h: int,
+    pad_ratio: float = 0.25,
+    min_pad_px: int = 12,
+) -> Tuple[int, int, int, int]:
+    pad_x = max(int(round(w * pad_ratio)), int(min_pad_px))
+    pad_y = max(int(round(h * pad_ratio)), int(min_pad_px))
+
+    x0 = max(0, x - pad_x)
+    y0 = max(0, y - pad_y)
+    x1 = min(img_w, x + w + pad_x)
+    y1 = min(img_h, y + h + pad_y)
+
+    return x0, y0, max(1, x1 - x0), max(1, y1 - y0)
+
+
 def detect_text_rois(
     image_path: str,
-    max_rois: int = 8,
-    min_area: int = 500,   # pixels
+    max_rois: int = 12,
+    min_area: int = 180,
     max_area: Optional[int] = None,
 ) -> List[Tuple[int, int, int, int]]:
     """
-    Heuristic text ROI detector using morphological gradients.
-    Returns list of (x, y, w, h) sorted by area desc, truncated to max_rois.
+    Morphology 기반 text ROI detector.
+    반환: (x, y, w, h) 리스트
     """
     img = cv2.imread(image_path)
     if img is None:
         return []
+
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Enhance text-like structures
-    blackhat = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)))
-    grad = cv2.Sobel(blackhat, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=3)
-    grad = cv2.convertScaleAbs(grad)
-    grad = cv2.GaussianBlur(grad, (3, 3), 0)
-    _, th = cv2.threshold(grad, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    # Close gaps horizontally to merge characters into words/lines
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 3))
-    closed = cv2.morphologyEx(th, cv2.MORPH_CLOSE, kernel, iterations=2)
-    cnts, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     H, W = gray.shape[:2]
+
     if max_area is None:
-        max_area = int(0.8 * H * W)
+        max_area = int(0.9 * H * W)
+
+    # 1) text-like 구조 강조
+    blackhat = cv2.morphologyEx(
+        gray,
+        cv2.MORPH_BLACKHAT,
+        cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5)),
+    )
+
+    grad_x = cv2.Sobel(blackhat, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=3)
+    grad_x = cv2.convertScaleAbs(grad_x)
+    grad_x = cv2.GaussianBlur(grad_x, (3, 3), 0)
+
+    _, th = cv2.threshold(
+        grad_x,
+        0,
+        255,
+        cv2.THRESH_BINARY + cv2.THRESH_OTSU,
+    )
+
+    # 2) 글자들을 한 줄로 묶기
+    kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 5))
+    closed = cv2.morphologyEx(th, cv2.MORPH_CLOSE, kernel_close, iterations=2)
+
+    # 3) 작은 점 노이즈 제거
+    kernel_open = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    opened = cv2.morphologyEx(closed, cv2.MORPH_OPEN, kernel_open, iterations=1)
+
+    cnts, _ = cv2.findContours(opened, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
     rois: List[Tuple[int, int, int, int]] = []
+
     for c in cnts:
         x, y, w, h = cv2.boundingRect(c)
         area = w * h
+
         if area < min_area or area > max_area:
             continue
+
         ar = w / float(h + 1e-6)
-        # Text lines often have 2 <= aspect ratio <= 20; relax to include plates
-        if ar < 1.2 or ar > 25.0:
+
+        # 번호판/텍스트 라인 후보 완화된 비율 조건
+        if ar < 1.0 or ar > 30.0:
             continue
-        # Keep within image bounds
-        x0 = max(0, x - 4); y0 = max(0, y - 4)
-        x1 = min(W, x + w + 4); y1 = min(H, y + h + 4)
-        rois.append((x0, y0, x1 - x0, y1 - y0))
-    # Sort by area desc and deduplicate overlapping boxes
+
+        # 너무 얇거나 너무 낮은 박스 제거
+        if w < 18 or h < 8:
+            continue
+
+        # ROI 확장
+        ex, ey, ew, eh = _expand_roi(
+            x, y, w, h, W, H,
+            pad_ratio=0.30,
+            min_pad_px=14,
+        )
+        rois.append((ex, ey, ew, eh))
+
+    # 정렬: 큰 영역 우선
     rois = sorted(rois, key=lambda r: r[2] * r[3], reverse=True)
-    filtered: List[Tuple[int, int, int, int]] = []
+
     def iou(a, b) -> float:
-        ax, ay, aw, ah = a; bx, by, bw, bh = b
-        ax2, ay2 = ax + aw, ay + ah; bx2, by2 = bx + bw, by + bh
+        ax, ay, aw, ah = a
+        bx, by, bw, bh = b
+        ax2, ay2 = ax + aw, ay + ah
+        bx2, by2 = bx + bw, by + bh
         inter_x1, inter_y1 = max(ax, bx), max(ay, by)
         inter_x2, inter_y2 = min(ax2, bx2), min(ay2, by2)
         iw, ih = max(0, inter_x2 - inter_x1), max(0, inter_y2 - inter_y1)
         inter = iw * ih
         union = aw * ah + bw * bh - inter + 1e-6
         return inter / union
+
+    # 중복 제거
+    filtered: List[Tuple[int, int, int, int]] = []
+
     for r in rois:
-        if all(iou(r, f) < 0.3 for f in filtered):
+        if all(iou(r, f) < 0.35 for f in filtered):
             filtered.append(r)
         if len(filtered) >= max_rois:
             break
+
     return filtered
 
 
 def ocr_hints_with_roi(
     image_path: str,
     languages: Optional[List[str]] = None,
-    max_rois: int = 8,
-    readtext_kwargs: Optional[Dict[str, any]] = None,
-    preproc_opts: Optional[Dict[str, any]] = None,
+    max_rois: int = 12,
+    readtext_kwargs: Optional[Dict[str, Any]] = None,
+    preproc_opts: Optional[Dict[str, Any]] = None,
 ) -> List[str]:
     if easyocr is None:
         logger.warning("easyocr not available; skipping OCR hints")
         return []
-    # Default to Korean+English when not specified
+
     langs = languages if (languages and len(languages) > 0) else ["ko", "en"]
     reader = easyocr.Reader(langs, gpu=torch.cuda.is_available())
-    # Run once on full image
+
     texts: List[str] = []
+
+    img_full = cv2.imread(image_path)
+    if img_full is None:
+        return []
+
+    # -----------------------------------------------------------------
+    # 1) 전체 이미지 OCR
+    # -----------------------------------------------------------------
     try:
-        img_full = cv2.imread(image_path)
-        if img_full is not None and preproc_opts is not None:
-            img_full = preprocess_image_for_ocr(img_full, **preproc_opts)
-            texts.extend(reader.readtext(img_full, detail=0, **(readtext_kwargs or {})) or [])
+        if preproc_opts is not None:
+            proc_full = preprocess_image_for_ocr(img_full, **preproc_opts)
+            texts.extend(reader.readtext(proc_full, detail=0, **(readtext_kwargs or {})) or [])
         else:
-            texts.extend(reader.readtext(image_path, detail=0, **(readtext_kwargs or {})) or [])
+            texts.extend(reader.readtext(img_full, detail=0, **(readtext_kwargs or {})) or [])
     except Exception:
         pass
-    # Then on candidate ROIs
+
+    # -----------------------------------------------------------------
+    # 2) ROI 탐지
+    # -----------------------------------------------------------------
     rois = detect_text_rois(image_path, max_rois=max_rois)
-    img = cv2.imread(image_path)
-    if img is not None:
-        for (x, y, w, h) in rois:
-            crop = img[y:y+h, x:x+w]
-            try:
-                if preproc_opts is not None:
-                    crop = preprocess_image_for_ocr(crop, **preproc_opts)
-                texts.extend(reader.readtext(crop, detail=0, **(readtext_kwargs or {})) or [])
-            except Exception:
-                continue
+
+    # -----------------------------------------------------------------
+    # 3) 각 ROI에 대해 multi-crop / multi-scale OCR
+    # -----------------------------------------------------------------
+    roi_scales = [1.0, 1.5, 2.0]
+
+    for (x, y, w, h) in rois:
+        crop = img_full[y:y + h, x:x + w]
+        if crop is None or crop.size == 0:
+            continue
+
+        roi_variants: List[np.ndarray] = [crop]
+
+        # 추가 확장 crop 한 번 더 생성
+        H, W = img_full.shape[:2]
+        x2, y2, w2, h2 = _expand_roi(
+            x, y, w, h, W, H,
+            pad_ratio=0.45,
+            min_pad_px=20,
+        )
+        crop_loose = img_full[y2:y2 + h2, x2:x2 + w2]
+        if crop_loose is not None and crop_loose.size > 0:
+            roi_variants.append(crop_loose)
+
+        for base_crop in roi_variants:
+            for scale in roi_scales:
+                try:
+                    cur = base_crop
+                    if scale > 1.0:
+                        bh, bw = cur.shape[:2]
+                        cur = cv2.resize(
+                            cur,
+                            (max(1, int(round(bw * scale))), max(1, int(round(bh * scale)))),
+                            interpolation=cv2.INTER_CUBIC,
+                        )
+
+                    # 원본 crop OCR
+                    texts.extend(reader.readtext(cur, detail=0, **(readtext_kwargs or {})) or [])
+
+                    # 전처리 crop OCR
+                    if preproc_opts is not None:
+                        proc = preprocess_image_for_ocr(cur, **preproc_opts)
+                        texts.extend(reader.readtext(proc, detail=0, **(readtext_kwargs or {})) or [])
+                except Exception:
+                    continue
+
     return extract_room_numbers_from_text(texts)
 
 
