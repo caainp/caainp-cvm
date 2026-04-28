@@ -18,6 +18,12 @@ try:
 except Exception:
     easyocr = None
 
+_openclip_cache: Dict[Tuple[str, str, str], Tuple[Any, Any]] = {}
+_easyocr_reader_cache: Dict[Tuple[Tuple[str, ...], bool], Any] = {}
+_map_csv_cache: Dict[Tuple[str, int], Tuple[Any, Dict[int, Any], np.ndarray, List[int]]] = {}
+_sift_detector_cache: Optional[Any] = None
+_sift_feature_cache: Dict[Tuple[str, int], Tuple[List[Any], Optional[np.ndarray]]] = {}
+
 # Support running as a module (-m scripts.localize_image) and as a file (python scripts/localize_image.py)
 try:
     from scripts.map_loader import load_map_csv  # type: ignore
@@ -49,10 +55,78 @@ def cosine_sim_matrix(query: np.ndarray, gallery: np.ndarray) -> np.ndarray:
     return query @ gallery.T
 
 
+def _get_easyocr_reader(langs: Tuple[str, ...], gpu: bool) -> Any:
+    if easyocr is None:
+        return None
+    key = (tuple(langs), bool(gpu))
+    if key not in _easyocr_reader_cache:
+        _easyocr_reader_cache[key] = easyocr.Reader(list(langs), gpu=bool(gpu))
+    return _easyocr_reader_cache[key]
+
+
+def load_map_csv_cached(csv_path: str) -> Tuple[Any, Dict[int, Any], np.ndarray, List[int]]:
+    path = os.path.abspath(str(csv_path))
+    try:
+        mtime_ns = int(os.stat(path).st_mtime_ns)
+    except OSError:
+        mtime_ns = 0
+    key = (path, mtime_ns)
+    if key not in _map_csv_cache:
+        _map_csv_cache[key] = load_map_csv(csv_path)
+    return _map_csv_cache[key]
+
+
+def _path_cache_key(path: str) -> Tuple[str, int]:
+    abs_path = os.path.abspath(str(path))
+    try:
+        mtime_ns = int(os.stat(abs_path).st_mtime_ns)
+    except OSError:
+        mtime_ns = 0
+    return abs_path, mtime_ns
+
+
+def _get_sift_detector() -> Optional[Any]:
+    global _sift_detector_cache
+    if _sift_detector_cache is not None:
+        return _sift_detector_cache
+    try:
+        _sift_detector_cache = cv2.SIFT_create()
+    except Exception:
+        logger.warning("SIFT unavailable; skipping geometric verification")
+        _sift_detector_cache = None
+    return _sift_detector_cache
+
+
+def _get_sift_features(image_path: str) -> Tuple[List[Any], Optional[np.ndarray]]:
+    key = _path_cache_key(image_path)
+    if key in _sift_feature_cache:
+        return _sift_feature_cache[key]
+    sift = _get_sift_detector()
+    if sift is None:
+        result: Tuple[List[Any], Optional[np.ndarray]] = ([], None)
+        _sift_feature_cache[key] = result
+        return result
+    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    if img is None:
+        result = ([], None)
+        _sift_feature_cache[key] = result
+        return result
+    try:
+        kp, des = sift.detectAndCompute(img, None)
+    except Exception:
+        kp, des = [], None
+    result = (list(kp or []), des)
+    _sift_feature_cache[key] = result
+    return result
+
+
 def load_openclip(model_name: str = "ViT-B-32", pretrained: str = "laion2b_s34b_b79k", device: str = "cpu"):
-    model, _, preprocess = open_clip.create_model_and_transforms(model_name, pretrained=pretrained, device=device)
-    model.eval()
-    return model, preprocess
+    key = (str(model_name), str(pretrained), str(device))
+    if key not in _openclip_cache:
+        model, _, preprocess = open_clip.create_model_and_transforms(model_name, pretrained=pretrained, device=device)
+        model.eval()
+        _openclip_cache[key] = (model, preprocess)
+    return _openclip_cache[key]
 
 
 def guess_model_for_embed_dim(embed_dim: int) -> Optional[Tuple[str, str]]:
@@ -187,6 +261,30 @@ def extract_room_numbers_from_text(texts: List[str]) -> List[str]:
     # logger.debug(f"filtered_room_numbers={out}")
     return out
 
+
+def extract_room_number_counts_from_text(texts: List[str]) -> Dict[str, int]:
+    counts: Dict[str, int] = {}
+    for t in texts:
+        norm = _normalize_ocr_text(t)
+        for c in _extract_numeric_candidates(norm):
+            c = _canonicalize_number_string(c)
+            if _is_plausible_domain_number(c):
+                counts[c] = counts.get(c, 0) + 1
+    return counts
+
+
+def ocr_number_weights_from_counts(ocr_nums: List[str], counts: Dict[str, int]) -> Dict[str, float]:
+    if not ocr_nums:
+        return {}
+    max_count = max([counts.get(str(n), 0) for n in ocr_nums] or [0])
+    if max_count <= 0:
+        return {str(n): 1.0 for n in ocr_nums}
+    weights: Dict[str, float] = {}
+    for n in ocr_nums:
+        c = counts.get(str(n), 0)
+        weights[str(n)] = 0.35 + 0.65 * (float(c) / float(max_count))
+    return weights
+
 def ocr_hints(image_path: str, languages: Optional[List[str]] = None) -> List[str]:
     if easyocr is None:
         logger.warning("easyocr not available; skipping OCR hints")
@@ -194,7 +292,7 @@ def ocr_hints(image_path: str, languages: Optional[List[str]] = None) -> List[st
     # Default to Korean+English when not specified
     langs = languages if (languages and len(languages) > 0) else ["ko", "en"]
     # Use GPU if available to avoid CPU warning and speed up OCR
-    reader = easyocr.Reader(langs, gpu=torch.cuda.is_available())
+    reader = _get_easyocr_reader(tuple(langs), torch.cuda.is_available())
     result = reader.readtext(image_path, detail=0)
     return extract_room_numbers_from_text(result)
 
@@ -422,19 +520,20 @@ def ocr_hints_with_roi(
     max_rois: int = 12,
     readtext_kwargs: Optional[Dict[str, Any]] = None,
     preproc_opts: Optional[Dict[str, Any]] = None,
-) -> List[str]:
+    return_texts: bool = False,
+) -> Any:
     if easyocr is None:
         logger.warning("easyocr not available; skipping OCR hints")
-        return []
+        return ([], []) if return_texts else []
 
     langs = languages if (languages and len(languages) > 0) else ["ko", "en"]
-    reader = easyocr.Reader(langs, gpu=torch.cuda.is_available())
+    reader = _get_easyocr_reader(tuple(langs), torch.cuda.is_available())
 
     texts: List[str] = []
 
     img_full = cv2.imread(image_path)
     if img_full is None:
-        return []
+        return ([], []) if return_texts else []
 
     # -----------------------------------------------------------------
     # 1) 전체 이미지 OCR
@@ -498,14 +597,47 @@ def ocr_hints_with_roi(
                 except Exception:
                     continue
 
-    return extract_room_numbers_from_text(texts)
+    nums = extract_room_numbers_from_text(texts)
+    if return_texts:
+        return nums, [str(t) for t in texts]
+    return nums
+
+
+def _is_missing_value(value: Any) -> bool:
+    if value is None:
+        return True
+    try:
+        if isinstance(value, float) and np.isnan(value):
+            return True
+    except Exception:
+        pass
+    s = str(value).strip()
+    return s == "" or s.lower() in {"nan", "none", "null"}
+
+
+def _canonical_int_tokens(value: Any) -> List[int]:
+    if _is_missing_value(value):
+        return []
+    out: List[int] = []
+    for tok in re.findall(r"\d{2,5}", str(value)):
+        try:
+            out.append(int(tok))
+        except Exception:
+            continue
+    return out
+
+
+def _description_has_number(description: Optional[str], number: int) -> bool:
+    if _is_missing_value(description):
+        return False
+    return re.search(rf"(?<!\d){int(number)}(?!\d)", str(description)) is not None
 
 
 def parse_room_range(value: Optional[str]) -> List[Tuple[int, int]]:
-    if value is None or not isinstance(value, str) or not value.strip():
+    if _is_missing_value(value):
         return []
     ranges: List[Tuple[int, int]] = []
-    parts = re.split(r"[;,]", value)
+    parts = re.split(r"[;,]", str(value))
     for p in parts:
         p = p.strip()
         if not p:
@@ -523,17 +655,21 @@ def parse_room_range(value: Optional[str]) -> List[Tuple[int, int]]:
 
 
 def room_number_match_score(
-    node_meta: Dict[str, any],
+    node_meta: Dict[str, Any],
     ocr_nums: List[str],
-    description: Optional[str]
+    description: Optional[str],
+    node_id: Optional[int] = None,
+    node_type: Optional[str] = None,
+    ocr_num_weights: Optional[Dict[str, float]] = None,
 ) -> float:
     if not ocr_nums:
         return 0.0
-    desc = description or ""
     anchor_room = node_meta.get("anchor_room")
     room_range = node_meta.get("room_range")
+    type_norm = str(node_type or "").upper()
 
     ranges = parse_room_range(room_range if isinstance(room_range, str) else str(room_range) if room_range is not None else None)
+    anchor_rooms = _canonical_int_tokens(anchor_room)
 
     score = 0.0
     for n in ocr_nums:
@@ -541,22 +677,39 @@ def room_number_match_score(
             vn = int(n)
         except Exception:
             continue
-        # exact anchor match
-        if anchor_room is not None:
+        weight = float((ocr_num_weights or {}).get(str(n), 1.0))
+        raw_score = 0.0
+        # Exact node/room evidence should dominate corridor range evidence.
+        if node_id is not None:
             try:
-                if int(str(anchor_room)) == vn:
-                    score = max(score, 1.0)
+                if int(node_id) == vn:
+                    raw_score = max(raw_score, 2.0)
             except Exception:
                 pass
-        # within range
+        if vn in anchor_rooms:
+            if type_norm == "ROOM":
+                raw_score = max(raw_score, 1.8)
+            else:
+                raw_score = max(raw_score, 0.7)
+        if _description_has_number(description, vn):
+            if type_norm == "ROOM":
+                raw_score = max(raw_score, 1.6)
+            else:
+                raw_score = max(raw_score, 0.3)
+        # Range evidence is useful but must stay weaker than an exact room hit.
         for a, b in ranges:
             if a <= vn <= b:
-                score = max(score, 0.8)
+                raw_score = max(raw_score, 0.35)
                 break
-        # description contains number
-        if n in desc:
-            score = max(score, 0.6)
+        score = max(score, raw_score * weight)
     return score
+
+
+def _ocr_token_matches_node_id(node_id: int, ocr_token: str) -> bool:
+    try:
+        return int(str(ocr_token).strip()) == int(node_id)
+    except Exception:
+        return False
 
 
 def geometric_verification_score(
@@ -565,20 +718,11 @@ def geometric_verification_score(
 ) -> float:
     if not reference_image_paths:
         return 0.0
-    try:
-        sift = cv2.SIFT_create()
-    except Exception:
-        logger.warning("SIFT unavailable; skipping geometric verification")
+    if _get_sift_detector() is None:
         return 0.0
 
-    try:
-        query_img = cv2.imread(query_image_path, cv2.IMREAD_GRAYSCALE)
-        if query_img is None:
-            return 0.0
-        kp_q, des_q = sift.detectAndCompute(query_img, None)
-        if des_q is None or len(kp_q) < 8:
-            return 0.0
-    except Exception:
+    kp_q, des_q = _get_sift_features(query_image_path)
+    if des_q is None or len(kp_q) < 8:
         return 0.0
 
     bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
@@ -587,10 +731,7 @@ def geometric_verification_score(
 
     for ref_path in reference_image_paths:
         try:
-            ref = cv2.imread(ref_path, cv2.IMREAD_GRAYSCALE)
-            if ref is None:
-                continue
-            kp_r, des_r = sift.detectAndCompute(ref, None)
+            kp_r, des_r = _get_sift_features(ref_path)
             if des_r is None or len(kp_r) < 8:
                 continue
             matches = bf.knnMatch(des_q, des_r, k=2)
@@ -640,6 +781,57 @@ def graph_prior_score(graph: nx.Graph, prev_node: Optional[int], candidate_node:
     return float(np.exp(-alpha * float(d)))
 
 
+def _clean_debug_value(value: Any) -> Any:
+    if value is None:
+        return None
+    try:
+        if isinstance(value, float) and np.isnan(value):
+            return None
+    except Exception:
+        pass
+    try:
+        if hasattr(value, "item"):
+            return value.item()
+    except Exception:
+        pass
+    return value
+
+
+def _build_fusion_debug_rows(
+    idx0: np.ndarray,
+    node_ids: np.ndarray,
+    node_records: Dict[int, Any],
+    vals0: np.ndarray,
+    ocr_adj: np.ndarray,
+    geo_adj: np.ndarray,
+    prior_adj: np.ndarray,
+    combined: np.ndarray,
+    *,
+    limit: int = 20,
+) -> List[Dict[str, Any]]:
+    order = np.argsort(-combined)[: max(0, int(limit))]
+    rows: List[Dict[str, Any]] = []
+    for rank, j in enumerate(order, start=1):
+        ni = int(idx0[j])
+        nid = int(node_ids[ni])
+        rec = node_records.get(nid)
+        extra = getattr(rec, "extra", {}) or {}
+        rows.append({
+            "rank": rank,
+            "node_id": nid,
+            "node_type": getattr(rec, "node_type", None),
+            "description": getattr(rec, "description", None),
+            "anchor_room": _clean_debug_value(extra.get("anchor_room")),
+            "room_range": _clean_debug_value(extra.get("room_range")),
+            "clip_score": round(float(vals0[j]), 6),
+            "ocr_score": round(float(ocr_adj[j]), 6),
+            "geo_score": round(float(geo_adj[j]), 6),
+            "prior_score": round(float(prior_adj[j]), 6),
+            "combined_score": round(float(combined[j]), 6),
+        })
+    return rows
+
+
 def localize_image(
     image_path: str,
     csv_path: str,
@@ -647,9 +839,13 @@ def localize_image(
     model_name: str = "ViT-B-32",
     pretrained: str = "laion2b_s34b_b79k",
     topk: int = 5,
+    clip_pool_size: int = 50,
+    ocr_merge_min_score: float = 0.4,
     use_ocr: bool = False,
     node_images_dir: Optional[str] = None,
     use_geo: bool = False,
+    geo_candidate_limit: int = 10,
+    geo_ref_limit: int = 4,
     prev_node: Optional[int] = None,
     w_clip: float = 1.0,
     w_ocr: float = 0.3,
@@ -678,7 +874,7 @@ def localize_image(
     ocr_beam_width: Optional[int] = None,
 ) -> dict:
     # load map
-    graph, node_records, emb_matrix, node_ids = load_map_csv(csv_path)
+    graph, node_records, emb_matrix, node_ids = load_map_csv_cached(csv_path)
     if emb_matrix.size == 0:
         raise RuntimeError("No clip_embedding found in CSV; cannot localize. Please populate embeddings first.")
 
@@ -712,12 +908,21 @@ def localize_image(
     # cosine sims
     sims = cosine_sim_matrix(q, emb_matrix)  # (N,)
 
-    # initial top-k by CLIP
-    idx0, vals0 = topk_indices(sims, max(topk, 10))  # take a slightly larger pool for re-ranking
+    # Wide CLIP shortlist for re-ranking; OCR can then merge exact/range matches outside that pool.
+    k_pool = max(int(topk), int(clip_pool_size), 10)
+    k_pool = min(k_pool, int(sims.shape[0]))
+    idx0, vals0 = topk_indices(sims, k_pool)
+    vals0 = vals0.astype(np.float32)
+    initial_clip_pool_size = int(len(idx0))
 
     # optional OCR hints
-    ocr_adj = np.zeros_like(vals0)
     ocr_nums: List[str] = []
+    ocr_raw_texts: List[str] = []
+    ocr_num_counts: Dict[str, int] = {}
+    ocr_num_weights: Dict[str, float] = {}
+    ocr_pool_merge_added = 0
+    ocr_merged_node_ids: List[int] = []
+    langs_eff: List[str] = list(ocr_langs) if ocr_langs else ["ko", "en"]
     if use_ocr:
         preproc_opts = {
             "use_grayscale": bool(ocr_grayscale),
@@ -743,43 +948,76 @@ def localize_image(
         if ocr_beam_width is not None:
             readtext_kwargs["beamWidth"] = int(ocr_beam_width)
         if ocr_use_roi:
-            ocr_nums = ocr_hints_with_roi(
+            ocr_nums, ocr_raw_texts = ocr_hints_with_roi(
                 image_path,
-                languages=ocr_langs,
+                languages=langs_eff,
                 max_rois=ocr_max_rois,
                 readtext_kwargs=readtext_kwargs,
                 preproc_opts=preproc_opts,
+                return_texts=True,
             )
         else:
             if easyocr is None:
                 logger.warning("easyocr not available; skipping OCR hints")
             else:
-                reader = easyocr.Reader(ocr_langs or ["en"], gpu=torch.cuda.is_available())
+                reader = _get_easyocr_reader(tuple(langs_eff), torch.cuda.is_available())
                 img_full = cv2.imread(image_path)
                 if img_full is not None:
                     img_full = preprocess_image_for_ocr(img_full, **preproc_opts)
                     try:
                         texts = reader.readtext(img_full, detail=0, **readtext_kwargs) or []
+                        ocr_raw_texts = [str(t) for t in texts]
                         ocr_nums = extract_room_numbers_from_text(texts)
                     except Exception:
                         ocr_nums = []
         # Log recognized OCR numbers for debugging
-        logger.info(f"OCR raw nums: {ocr_nums}")
+        logger.info(f"OCR raw nums: {ocr_nums} (langs={langs_eff})")
+        ocr_num_counts = extract_room_number_counts_from_text(ocr_raw_texts)
+        ocr_num_weights = ocr_number_weights_from_counts(ocr_nums, ocr_num_counts)
         if ocr_nums:
-            for j, ni in enumerate(idx0):
-                nid = int(node_ids[ni])
-                rec = node_records[nid]
-                score = room_number_match_score(rec.extra, ocr_nums, rec.description)
-                ocr_adj[j] = score
+            node_id_to_row = {int(node_ids[i]): i for i in range(len(node_ids))}
+            pool_set = set(int(x) for x in idx0.tolist())
+            n_before = len(pool_set)
+            thr = float(ocr_merge_min_score)
+            for nid, rec in node_records.items():
+                if nid not in node_id_to_row:
+                    continue
+                sc = room_number_match_score(
+                    rec.extra,
+                    ocr_nums,
+                    rec.description,
+                    node_id=nid,
+                    node_type=rec.node_type,
+                    ocr_num_weights=ocr_num_weights,
+                )
+                id_hit = any(_ocr_token_matches_node_id(nid, on) for on in ocr_nums)
+                if id_hit or sc >= thr:
+                    row_idx = int(node_id_to_row[nid])
+                    if row_idx not in pool_set:
+                        ocr_merged_node_ids.append(int(nid))
+                    pool_set.add(row_idx)
+            if len(pool_set) > n_before:
+                ocr_pool_merge_added = len(pool_set) - n_before
+                logger.info(
+                    f"OCR pool merge: added {ocr_pool_merge_added} nodes "
+                    f"(min_match_score>={thr} or OCR digit == node_id)"
+                )
+            idx0 = np.array(sorted(pool_set), dtype=np.int64)
+            vals0 = sims[idx0].astype(np.float32)
 
-    # optional geometric verification per candidate using node_images_dir
-    geo_adj = np.zeros_like(vals0)
-    if use_geo and node_images_dir:
+    ocr_adj = np.zeros(len(idx0), dtype=np.float32)
+    if use_ocr and ocr_nums:
         for j, ni in enumerate(idx0):
             nid = int(node_ids[ni])
-            ref_paths = collect_reference_images(node_images_dir, nid)
-            if ref_paths:
-                geo_adj[j] = geometric_verification_score(image_path, ref_paths)
+            rec = node_records[nid]
+            ocr_adj[j] = room_number_match_score(
+                rec.extra,
+                ocr_nums,
+                rec.description,
+                node_id=nid,
+                node_type=rec.node_type,
+                ocr_num_weights=ocr_num_weights,
+            )
 
     # optional graph prior from prev_node
     prior_adj = np.zeros_like(vals0)
@@ -788,8 +1026,35 @@ def localize_image(
             nid = int(node_ids[ni])
             prior_adj[j] = graph_prior_score(graph, prev_node, nid, alpha=0.7)
 
+    # optional geometric verification per candidate using node_images_dir
+    geo_adj = np.zeros_like(vals0)
+    geo_evaluated_count = 0
+    if use_geo and node_images_dir:
+        geo_order = np.arange(len(idx0))
+        if geo_candidate_limit is not None and int(geo_candidate_limit) > 0 and len(geo_order) > int(geo_candidate_limit):
+            pre_geo = w_clip * vals0 + w_ocr * ocr_adj + w_prior * prior_adj
+            geo_order = np.argsort(-pre_geo)[: int(geo_candidate_limit)]
+        for j in geo_order:
+            ni = int(idx0[int(j)])
+            nid = int(node_ids[ni])
+            ref_paths = collect_reference_images(node_images_dir, nid, limit=int(geo_ref_limit))
+            if ref_paths:
+                geo_adj[int(j)] = geometric_verification_score(image_path, ref_paths)
+            geo_evaluated_count += 1
+
     # combine scores
     combined = w_clip * vals0 + w_ocr * ocr_adj + w_geo * geo_adj + w_prior * prior_adj
+    fusion_debug = _build_fusion_debug_rows(
+        idx0=idx0,
+        node_ids=node_ids,
+        node_records=node_records,
+        vals0=vals0,
+        ocr_adj=ocr_adj,
+        geo_adj=geo_adj,
+        prior_adj=prior_adj,
+        combined=combined,
+        limit=max(int(topk), 20),
+    )
 
     # final topk
     idx, vals = topk_indices(combined, topk)
@@ -808,6 +1073,21 @@ def localize_image(
         "candidates": [{"node_id": n, "score": s} for n, s in zip(top_nodes, top_scores)],
         "debug": {
             "ocr_numbers": ocr_nums,
+            "ocr_raw_texts": ocr_raw_texts,
+            "ocr_num_counts": ocr_num_counts,
+            "ocr_num_weights": {k: round(float(v), 4) for k, v in ocr_num_weights.items()},
+            "ocr_langs": list(langs_eff) if use_ocr else [],
+            "clip_pool_size": int(k_pool),
+            "initial_clip_pool_size": initial_clip_pool_size,
+            "final_pool_size": int(len(idx0)),
+            "clip_pool_after_merge": int(len(idx0)),
+            "ocr_pool_merge_added": int(ocr_pool_merge_added),
+            "ocr_merged_node_ids": ocr_merged_node_ids,
+            "ocr_merge_min_score": float(ocr_merge_min_score),
+            "geo_candidate_limit": int(geo_candidate_limit) if geo_candidate_limit is not None else None,
+            "geo_evaluated_count": int(geo_evaluated_count),
+            "geo_ref_limit": int(geo_ref_limit),
+            "fusion_candidates": fusion_debug,
             "weights": {"w_clip": w_clip, "w_ocr": w_ocr, "w_geo": w_geo, "w_prior": w_prior},
         },
     }
@@ -825,6 +1105,10 @@ def main():
     ap.add_argument("--use_ocr", action="store_true", help="Use OCR re-ranking")
     ap.add_argument("--node_images_dir", default="node_images/node_images", help="Directory of reference node images")
     ap.add_argument("--use_geo", action="store_true", help="Use geometric verification re-ranking")
+    ap.add_argument("--clip_pool_size", "--clip-pool-size", type=int, default=50, help="CLIP shortlist size before OCR/geo fusion")
+    ap.add_argument("--ocr_merge_min_score", "--ocr-merge-min-score", type=float, default=0.4, help="Merge nodes into the pool when OCR match score is at least this value")
+    ap.add_argument("--geo_candidate_limit", "--geo-candidate-limit", type=int, default=10, help="Run SIFT geometry only on the top N pre-geo fusion candidates; <=0 means all")
+    ap.add_argument("--geo_ref_limit", "--geo-ref-limit", type=int, default=4, help="Reference images per node for geometric verification")
     ap.add_argument("--prev_node", type=int, default=None, help="Previous node id for graph prior")
     ap.add_argument("--w_clip", type=float, default=1.0)
     ap.add_argument("--w_ocr", type=float, default=0.3)
@@ -862,9 +1146,13 @@ def main():
         model_name=args.model,
         pretrained=args.pretrained,
         topk=args.topk,
+        clip_pool_size=int(getattr(args, "clip_pool_size", 50)),
+        ocr_merge_min_score=float(getattr(args, "ocr_merge_min_score", 0.4)),
         use_ocr=args.use_ocr,
         node_images_dir=args.node_images_dir,
         use_geo=args.use_geo,
+        geo_candidate_limit=int(getattr(args, "geo_candidate_limit", 10)),
+        geo_ref_limit=int(getattr(args, "geo_ref_limit", 4)),
         prev_node=args.prev_node,
         w_clip=args.w_clip,
         w_ocr=args.w_ocr,
@@ -873,6 +1161,7 @@ def main():
         ocr_langs=ocr_langs,
         ocr_use_roi=bool(getattr(args, "ocr_use_roi", False)),
         ocr_max_rois=int(getattr(args, "ocr_max_rois", 8)),
+        ocr_grayscale=bool(getattr(args, "ocr_grayscale", False)),
         ocr_contrast=bool(getattr(args, "ocr_contrast", False)),
         ocr_sharpen=bool(getattr(args, "ocr_sharpen", False)),
         ocr_adaptive=bool(getattr(args, "ocr_adaptive", False)),

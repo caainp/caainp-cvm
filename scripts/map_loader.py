@@ -116,6 +116,18 @@ def _safe_l2_normalize(vec: np.ndarray) -> np.ndarray:
     return (vec / norm).astype(np.float32)
 
 
+def _is_missing_scalar(value: Any) -> bool:
+    if value is None:
+        return True
+    try:
+        if isinstance(value, float) and np.isnan(value):
+            return True
+    except Exception:
+        pass
+    s = str(value).strip()
+    return s == "" or s.lower() in {"nan", "none", "null"}
+
+
 def load_map_csv(
     csv_path: str,
     id_column: str = "node_id",
@@ -170,6 +182,10 @@ def load_map_csv(
             if description_col and c == description_col:
                 continue
             extra[c] = row.get(c, None)
+
+        # Normalize sparse CSV metadata: a ROOM node's natural anchor is its own room/node id.
+        if str(type_val).upper() == "ROOM" and _is_missing_scalar(extra.get("anchor_room")):
+            extra["anchor_room"] = str(node_id)
 
         rec = NodeRecord(
             node_id=node_id,

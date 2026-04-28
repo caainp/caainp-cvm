@@ -214,6 +214,10 @@ def main() -> None:
     ap.add_argument("--w_ocr", type=float, default=0.8)
     ap.add_argument("--w_geo", type=float, default=0.4)
     ap.add_argument("--w_prior", type=float, default=0.2)
+    ap.add_argument("--clip_pool_size", type=int, default=50)
+    ap.add_argument("--ocr_merge_min_score", type=float, default=0.4)
+    ap.add_argument("--geo_candidate_limit", type=int, default=10)
+    ap.add_argument("--geo_ref_limit", type=int, default=4)
 
     # OCR 세부 옵션
     ap.add_argument("--ocr_langs", default="ko,en", help="예: ko,en")
@@ -295,9 +299,13 @@ def main() -> None:
             csv_path=str(csv_path),
             device=args.device,
             topk=max(int(args.topk), 5),
+            clip_pool_size=int(args.clip_pool_size),
+            ocr_merge_min_score=float(args.ocr_merge_min_score),
             use_ocr=use_ocr,
             node_images_dir=str(node_images_dir),
             use_geo=use_geo,
+            geo_candidate_limit=int(args.geo_candidate_limit),
+            geo_ref_limit=int(args.geo_ref_limit),
             prev_node=prev_node,
             w_clip=float(args.w_clip),
             w_ocr=float(args.w_ocr),
@@ -328,6 +336,7 @@ def main() -> None:
 
         candidates = cvm_result.get("candidates", []) or []
         candidate_nodes = [int(c["node_id"]) for c in candidates]
+        debug = cvm_result.get("debug", {}) or {}
 
         value_map = build_value_map_v2(
             current_node=pred_current_node,
@@ -384,8 +393,17 @@ def main() -> None:
             "distance_pred_to_goal": dist_pred_to_goal if dist_pred_to_goal is not None else "",
             "distance_gt_to_goal": dist_gt_to_goal if dist_gt_to_goal is not None else "",
             "confidence": round(confidence, 6),
-            "ocr_numbers": ",".join(cvm_result.get("debug", {}).get("ocr_numbers", []) or []),
+            "ocr_numbers": ",".join(debug.get("ocr_numbers", []) or []),
+            "ocr_raw_texts": json.dumps(debug.get("ocr_raw_texts", []) or [], ensure_ascii=False),
+            "ocr_num_counts": json.dumps(debug.get("ocr_num_counts", {}) or {}, ensure_ascii=False),
+            "ocr_num_weights": json.dumps(debug.get("ocr_num_weights", {}) or {}, ensure_ascii=False),
             "candidate_nodes": json.dumps(candidate_nodes, ensure_ascii=False),
+            "initial_clip_pool_size": debug.get("initial_clip_pool_size", ""),
+            "final_pool_size": debug.get("final_pool_size", ""),
+            "ocr_pool_merge_added": debug.get("ocr_pool_merge_added", ""),
+            "ocr_merged_node_ids": json.dumps(debug.get("ocr_merged_node_ids", []) or [], ensure_ascii=False),
+            "geo_evaluated_count": debug.get("geo_evaluated_count", ""),
+            "fusion_candidates": json.dumps(debug.get("fusion_candidates", []) or [], ensure_ascii=False),
         }
         rows.append(row)
 
@@ -434,6 +452,10 @@ def main() -> None:
             "w_ocr": float(args.w_ocr),
             "w_geo": float(args.w_geo),
             "w_prior": float(args.w_prior),
+            "clip_pool_size": int(args.clip_pool_size),
+            "ocr_merge_min_score": float(args.ocr_merge_min_score),
+            "geo_candidate_limit": int(args.geo_candidate_limit),
+            "geo_ref_limit": int(args.geo_ref_limit),
             "ocr_langs": ocr_langs,
             "ocr_use_roi": bool(args.ocr_use_roi),
             "ocr_max_rois": int(args.ocr_max_rois),
@@ -480,7 +502,16 @@ def main() -> None:
         "distance_gt_to_goal",
         "confidence",
         "ocr_numbers",
+        "ocr_raw_texts",
+        "ocr_num_counts",
+        "ocr_num_weights",
         "candidate_nodes",
+        "initial_clip_pool_size",
+        "final_pool_size",
+        "ocr_pool_merge_added",
+        "ocr_merged_node_ids",
+        "geo_evaluated_count",
+        "fusion_candidates",
     ]
 
     with csv_out.open("w", newline="", encoding="utf-8-sig") as f:
