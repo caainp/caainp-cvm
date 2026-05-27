@@ -225,6 +225,7 @@ def main() -> None:
     ap.add_argument("--ocr_link_threshold", type=float, default=None)
     ap.add_argument("--ocr_decoder", type=str, default=None)
     ap.add_argument("--ocr_beam_width", type=int, default=None)
+    ap.add_argument("--ocr_debug_max_observations", type=int, default=200)
 
     ap.add_argument(
         "--limit",
@@ -315,6 +316,7 @@ def main() -> None:
                 ocr_link_threshold=args.ocr_link_threshold,
                 ocr_decoder=args.ocr_decoder,
                 ocr_beam_width=args.ocr_beam_width,
+                ocr_debug_max_observations=int(args.ocr_debug_max_observations),
             )
 
             pred_node = int(out["current_node"])
@@ -345,6 +347,10 @@ def main() -> None:
                 "dist_le_2": int(gdist is not None and gdist <= 2),
                 "ocr_numbers": ",".join(debug.get("ocr_numbers", []) or []),
                 "ocr_raw_texts": json.dumps(debug.get("ocr_raw_texts", []) or [], ensure_ascii=False),
+                "ocr_observation_count": debug.get("ocr_observation_count", ""),
+                "ocr_source_summary": json.dumps(debug.get("ocr_source_summary", {}) or {}, ensure_ascii=False),
+                "ocr_number_sources": json.dumps(debug.get("ocr_number_sources", []) or [], ensure_ascii=False),
+                "ocr_observations": json.dumps(debug.get("ocr_observations", []) or [], ensure_ascii=False),
                 "ocr_num_counts": json.dumps(debug.get("ocr_num_counts", {}) or {}, ensure_ascii=False),
                 "ocr_num_weights": json.dumps(debug.get("ocr_num_weights", {}) or {}, ensure_ascii=False),
                 "candidate_nodes": json.dumps(candidate_nodes, ensure_ascii=False),
@@ -387,6 +393,10 @@ def main() -> None:
                 "dist_le_2": 0,
                 "ocr_numbers": "",
                 "ocr_raw_texts": "[]",
+                "ocr_observation_count": "",
+                "ocr_source_summary": "{}",
+                "ocr_number_sources": "[]",
+                "ocr_observations": "[]",
                 "ocr_num_counts": "{}",
                 "ocr_num_weights": "{}",
                 "candidate_nodes": "[]",
@@ -482,6 +492,7 @@ def main() -> None:
             "ocr_link_threshold": args.ocr_link_threshold,
             "ocr_decoder": args.ocr_decoder,
             "ocr_beam_width": args.ocr_beam_width,
+            "ocr_debug_max_observations": int(args.ocr_debug_max_observations),
         },
     }
 
@@ -506,6 +517,10 @@ def main() -> None:
         "dist_le_2",
         "ocr_numbers",
         "ocr_raw_texts",
+        "ocr_observation_count",
+        "ocr_source_summary",
+        "ocr_number_sources",
+        "ocr_observations",
         "ocr_num_counts",
         "ocr_num_weights",
         "candidate_nodes",

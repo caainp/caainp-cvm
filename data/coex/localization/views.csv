@@ -1,0 +1,128 @@
+﻿view_id,node_id,floor,view_label,image_path,view_role,direction_to,use_for_localization,memo
+3F_3013_axis_from3132_01,3013,3F,axis_from3132,../view/3F/3013/3F_3013_axis_from3132_01.jpg,corridor,,true,view_label=axis_from3132
+3F_3013_axis_to3132_01,3013,3F,axis_to3132,../view/3F/3013/3F_3013_axis_to3132_01.jpg,corridor,3132,true,view_label=axis_to3132
+3F_3013_context_01,3013,3F,context,../view/3F/3013/3F_3013_context_01.jpg,context,,true,view_label=context
+3F_3013_from3014_01,3013,3F,from3014,../view/3F/3013/3F_3013_from3014_01.jpg,corridor,,true,view_label=from3014
+3F_3013_to3014_01,3013,3F,to3014,../view/3F/3013/3F_3013_to3014_01.jpg,corridor,3014,true,
+3F_3014_from3013conn_to_junction_01,3014,3F,from3013conn_to_junction,../view/3F/3014/3F_3014_from3013conn_to_junction_01.jpg,connector,,true,view_label=from3013conn_to_junction
+3F_3014_from3132conn_to_junction_01,3014,3F,from3132conn_to_junction,../view/3F/3014/3F_3014_from3132conn_to_junction_01.jpg,connector,,true,view_label=from3132conn_to_junction
+3F_3014_junction_axis_01,3014,3F,junction_axis,../view/3F/3014/3F_3014_junction_axis_01.jpg,corridor,,true,
+3F_3014_junction_axis_02,3014,3F,junction_axis,../view/3F/3014/3F_3014_junction_axis_02.jpg,corridor,,true,
+3F_3014_to3013conn_01,3014,3F,to3013conn,../view/3F/3014/3F_3014_to3013conn_01.jpg,connector,3013,true,
+3F_3014_to3015_01,3014,3F,to3015,../view/3F/3014/3F_3014_to3015_01.jpg,corridor,3015,true,
+3F_3014_to3132conn_01,3014,3F,to3132conn,../view/3F/3014/3F_3014_to3132conn_01.jpg,connector,3132,true,
+3F_3014_to3148_01,3014,3F,to3148,../view/3F/3014/3F_3014_to3148_01.jpg,corridor,3148,true,
+3F_3014_to3149_01,3014,3F,to3149,../view/3F/3014/3F_3014_to3149_01.jpg,corridor,3149,true,
+3F_3015_side_doors_from3014_01,3015,3F,side_doors_from3014,../view/3F/3015/3F_3015_side_doors_from3014_01.jpg,door,,false,room entrance candidate
+3F_3015_side_doors_from3016_01,3015,3F,side_doors_from3016,../view/3F/3015/3F_3015_side_doors_from3016_01.jpg,door,,false,room entrance candidate
+3F_3015_to3014_01,3015,3F,to3014,../view/3F/3015/3F_3015_to3014_01.jpg,corridor,3014,true,
+3F_3015_to3016_01,3015,3F,to3016,../view/3F/3015/3F_3015_to3016_01.jpg,corridor,3016,true,
+3F_3015_to3021_01,3015,3F,to3021,../view/3F/3015/3F_3015_to3021_01.jpg,corridor,3021,true,
+3F_3015_to3137_01,3015,3F,to3137,../view/3F/3015/3F_3015_to3137_01.jpg,corridor,3137,true,
+3F_3015_to3138_01,3015,3F,to3138,../view/3F/3015/3F_3015_to3138_01.jpg,corridor,3138,true,
+3F_3016_to3015_01,3016,3F,to3015,../view/3F/3016/3F_3016_to3015_01.jpg,corridor,3015,true,
+3F_3016_to3140_01,3016,3F,to3140,../view/3F/3016/3F_3016_to3140_01.jpg,corridor,3140,true,
+3F_3021_door_to3015_01,3021,3F,door_to3015,../view/3F/3021/3F_3021_door_to3015_01.jpg,door,3015,false,room entrance candidate
+3F_3021_to3015_01,3021,3F,to3015,../view/3F/3021/3F_3021_to3015_01.jpg,corridor,3015,true,
+3F_3021_to_E7E8_01,3021,3F,to_E7E8,../view/3F/3021/3F_3021_to_E7E8_01.jpg,corridor,,true,
+3F_3021_to_E7E8_context_01,3021,3F,to_E7E8_context,../view/3F/3021/3F_3021_to_E7E8_context_01.jpg,context,,true,view_label=to_E7E8_context
+3F_3021_to_E7E8_context_02,3021,3F,to_E7E8_context,../view/3F/3021/3F_3021_to_E7E8_context_02.jpg,context,,true,view_label=to_E7E8_context
+3F_3043_center_context_01,3043,3F,center_context,../view/3F/3043/3F_3043_center_context_01.jpg,context,,true,view_label=center_context
+3F_3043_center_context_02,3043,3F,center_context,../view/3F/3043/3F_3043_center_context_02.jpg,context,,true,view_label=center_context
+3F_3043_from3044_to_inside_01,3043,3F,from3044_to_inside,../view/3F/3043/3F_3043_from3044_to_inside_01.jpg,corridor,,true,view_label=from3044_to_inside
+3F_3043_from3044_to_inside_02,3043,3F,from3044_to_inside,../view/3F/3043/3F_3043_from3044_to_inside_02.jpg,corridor,,true,view_label=from3044_to_inside
+3F_3043_left_doors_diag_01,3043,3F,left_doors_diag,../view/3F/3043/3F_3043_left_doors_diag_01.jpg,door,,false,room entrance candidate
+3F_3043_right_doors_diag_01,3043,3F,right_doors_diag,../view/3F/3043/3F_3043_right_doors_diag_01.jpg,door,,false,room entrance candidate
+3F_3043_to3044_exit_01,3043,3F,to3044_exit,../view/3F/3043/3F_3043_to3044_exit_01.jpg,corridor,3044,true,
+3F_3044_axis_to3046_01,3044,3F,axis_to3046,../view/3F/3044/3F_3044_axis_to3046_01.jpg,corridor,3046,true,view_label=axis_to3046
+3F_3044_axis_toEnd_01,3044,3F,axis_toEnd,../view/3F/3044/3F_3044_axis_toEnd_01.jpg,corridor,,true,view_label=axis_toEnd
+3F_3044_to3013_foyer_01,3044,3F,to3013_foyer,../view/3F/3044/3F_3044_to3013_foyer_01.jpg,foyer,3013,true,
+3F_3044_to3013_foyer_02,3044,3F,to3013_foyer,../view/3F/3044/3F_3044_to3013_foyer_02.jpg,foyer,3013,true,
+3F_3044_to3043_ent_01,3044,3F,to3043_ent,../view/3F/3044/3F_3044_to3043_ent_01.jpg,door,3043,false,room entrance candidate
+3F_3046_axis_to3044_01,3046,3F,axis_to3044,../view/3F/3046/3F_3046_axis_to3044_01.jpg,corridor,3044,true,view_label=axis_to3044
+3F_3046_axis_to3048_01,3046,3F,axis_to3048,../view/3F/3046/3F_3046_axis_to3048_01.jpg,corridor,3048,true,view_label=axis_to3048
+3F_3046_to3045_ent_01,3046,3F,to3045_ent,../view/3F/3046/3F_3046_to3045_ent_01.jpg,door,3045,false,room entrance candidate
+3F_3046_to3132_foyer_01,3046,3F,to3132_foyer,../view/3F/3046/3F_3046_to3132_foyer_01.jpg,foyer,3132,true,
+3F_3046_to3132_foyer_02,3046,3F,to3132_foyer,../view/3F/3046/3F_3046_to3132_foyer_02.jpg,foyer,3132,true,
+3F_3048_axis_to3046_01,3048,3F,axis_to3046,../view/3F/3048/3F_3048_axis_to3046_01.jpg,corridor,3046,true,view_label=axis_to3046
+3F_3048_axis_to3050_01,3048,3F,axis_to3050,../view/3F/3048/3F_3048_axis_to3050_01.jpg,corridor,3050,true,view_label=axis_to3050
+3F_3048_to3047_ent_01,3048,3F,to3047_ent,../view/3F/3048/3F_3048_to3047_ent_01.jpg,door,3047,false,room entrance candidate
+3F_3048_to3131_foyer_01,3048,3F,to3131_foyer,../view/3F/3048/3F_3048_to3131_foyer_01.jpg,foyer,3131,true,
+3F_3048_to3131_foyer_02,3048,3F,to3131_foyer,../view/3F/3048/3F_3048_to3131_foyer_02.jpg,foyer,3131,true,
+3F_3050_axis_to3048_01,3050,3F,axis_to3048,../view/3F/3050/3F_3050_axis_to3048_01.jpg,corridor,3048,true,view_label=axis_to3048
+3F_3050_axis_to3052_01,3050,3F,axis_to3052,../view/3F/3050/3F_3050_axis_to3052_01.jpg,corridor,3052,true,view_label=axis_to3052
+3F_3050_to3049_ent_01,3050,3F,to3049_ent,../view/3F/3050/3F_3050_to3049_ent_01.jpg,door,3049,false,room entrance candidate
+3F_3050_to3141_foyer_01,3050,3F,to3141_foyer,../view/3F/3050/3F_3050_to3141_foyer_01.jpg,foyer,3141,true,
+3F_3050_to3141_foyer_02,3050,3F,to3141_foyer,../view/3F/3050/3F_3050_to3141_foyer_02.jpg,foyer,3141,true,
+3F_3070_301A_ENT_01,3070,3F,301A_ENT,../view/3F/3070/3F_3070_301A_ENT_01.jpg,door,,false,room entrance candidate
+3F_3070_301A_ENT_02,3070,3F,301A_ENT,../view/3F/3070/3F_3070_301A_ENT_02.jpg,door,,false,room entrance candidate
+3F_3071_301B_ENT_01,3071,3F,301B_ENT,../view/3F/3071/3F_3071_301B_ENT_01.jpg,door,,false,room entrance candidate
+3F_3071_301B_ENT_02,3071,3F,301B_ENT,../view/3F/3071/3F_3071_301B_ENT_02.jpg,door,,false,room entrance candidate
+3F_3072_302_ENT_01,3072,3F,302_ENT,../view/3F/3072/3F_3072_302_ENT_01.jpg,door,,false,room entrance candidate
+3F_3073_303_ENT_01,3073,3F,303_ENT,../view/3F/3073/3F_3073_303_ENT_01.jpg,door,,false,room entrance candidate
+3F_3074_304A_ENT_01,3074,3F,304A_ENT,../view/3F/3074/3F_3074_304A_ENT_01.jpg,door,,false,room entrance candidate
+3F_3075_304B_ENT_01,3075,3F,304B_ENT,../view/3F/3075/3F_3075_304B_ENT_01.jpg,door,,false,room entrance candidate
+3F_3076_305A_ENT_01,3076,3F,305A_ENT,../view/3F/3076/3F_3076_305A_ENT_01.jpg,door,,false,room entrance candidate
+3F_3077_305B_ENT_01,3077,3F,305B_ENT,../view/3F/3077/3F_3077_305B_ENT_01.jpg,door,,false,room entrance candidate
+3F_3078_306_ENT_01,3078,3F,306_ENT,../view/3F/3078/3F_3078_306_ENT_01.jpg,door,,false,room entrance candidate
+3F_3079_DEST_01,3079,3F,DEST,../view/3F/3079/3F_3079_DEST_01.jpg,destination,,false,destination confirmation candidate
+3F_3079_from3044_01,3079,3F,from3044,../view/3F/3079/3F_3079_from3044_01.jpg,corridor,,true,view_label=from3044
+3F_3079_from3046_01,3079,3F,from3046,../view/3F/3079/3F_3079_from3046_01.jpg,corridor,,true,view_label=from3046
+3F_3080_ENT_01,3080,3F,ENT,../view/3F/3080/3F_3080_ENT_01.jpg,door,,false,room entrance candidate
+3F_3080_from3014_01,3080,3F,from3014,../view/3F/3080/3F_3080_from3014_01.jpg,corridor,,true,view_label=from3014
+3F_3080_from3014_02,3080,3F,from3014,../view/3F/3080/3F_3080_from3014_02.jpg,corridor,,true,view_label=from3014
+3F_3122_E7_ent_01,3122,3F,E7_ent,../view/3F/3122/3F_3122_E7_ent_01.jpg,door,,false,room entrance candidate
+3F_3123_E8_ent_01,3123,3F,E8_ent,../view/3F/3123/3F_3123_E8_ent_01.jpg,door,,false,room entrance candidate
+3F_3131_axis_from3132_01,3131,3F,axis_from3132,../view/3F/3131/3F_3131_axis_from3132_01.jpg,corridor,,true,view_label=axis_from3132
+3F_3131_axis_from3141_01,3131,3F,axis_from3141,../view/3F/3131/3F_3131_axis_from3141_01.jpg,corridor,,true,view_label=axis_from3141
+3F_3131_axis_to3132_01,3131,3F,axis_to3132,../view/3F/3131/3F_3131_axis_to3132_01.jpg,corridor,3132,true,view_label=axis_to3132
+3F_3131_axis_to3141_01,3131,3F,axis_to3141,../view/3F/3131/3F_3131_axis_to3141_01.jpg,corridor,3141,true,view_label=axis_to3141
+3F_3131_context_01,3131,3F,context,../view/3F/3131/3F_3131_context_01.jpg,context,,true,view_label=context
+3F_3131_context_02,3131,3F,context,../view/3F/3131/3F_3131_context_02.jpg,context,,true,view_label=context
+3F_3131_from3134_01,3131,3F,from3134,../view/3F/3131/3F_3131_from3134_01.jpg,corridor,,true,view_label=from3134
+3F_3131_from3144_01,3131,3F,from3144,../view/3F/3131/3F_3131_from3144_01.jpg,corridor,,true,view_label=from3144
+3F_3131_fromC_01,3131,3F,fromC,../view/3F/3131/3F_3131_fromC_01.jpg,corridor,,true,view_label=fromC
+3F_3131_to3134_01,3131,3F,to3134,../view/3F/3131/3F_3131_to3134_01.jpg,corridor,3134,true,
+3F_3131_to3144_01,3131,3F,to3144,../view/3F/3131/3F_3131_to3144_01.jpg,corridor,3144,true,
+3F_3131_toC_01,3131,3F,toC,../view/3F/3131/3F_3131_toC_01.jpg,corridor,,true,
+3F_3131_toC_02,3131,3F,toC,../view/3F/3131/3F_3131_toC_02.jpg,corridor,,true,
+3F_3131_toC_03,3131,3F,toC,../view/3F/3131/3F_3131_toC_03.jpg,corridor,,true,
+3F_3132_axis_from3013_01,3132,3F,axis_from3013,../view/3F/3132/3F_3132_axis_from3013_01.jpg,corridor,,true,view_label=axis_from3013
+3F_3132_axis_from3013_02,3132,3F,axis_from3013,../view/3F/3132/3F_3132_axis_from3013_02.jpg,corridor,,true,view_label=axis_from3013
+3F_3132_axis_from3131_01,3132,3F,axis_from3131,../view/3F/3132/3F_3132_axis_from3131_01.jpg,corridor,,true,view_label=axis_from3131
+3F_3132_axis_to3013_01,3132,3F,axis_to3013,../view/3F/3132/3F_3132_axis_to3013_01.jpg,corridor,3013,true,view_label=axis_to3013
+3F_3132_context_01,3132,3F,context,../view/3F/3132/3F_3132_context_01.jpg,context,,true,view_label=context
+3F_3132_context_02,3132,3F,context,../view/3F/3132/3F_3132_context_02.jpg,context,,true,view_label=context
+3F_3132_from3014_01,3132,3F,from3014,../view/3F/3132/3F_3132_from3014_01.jpg,corridor,,true,view_label=from3014
+3F_3132_from3143_01,3132,3F,from3143,../view/3F/3132/3F_3132_from3143_01.jpg,corridor,,true,view_label=from3143
+3F_3132_to3014_01,3132,3F,to3014,../view/3F/3132/3F_3132_to3014_01.jpg,corridor,3014,true,
+3F_3132_to3143_01,3132,3F,to3143,../view/3F/3132/3F_3132_to3143_01.jpg,corridor,3143,true,
+3F_3132_to3143_02,3132,3F,to3143,../view/3F/3132/3F_3132_to3143_02.jpg,corridor,3143,true,
+3F_3134_CONN_01,3134,3F,CONN,../view/3F/3134/3F_3134_CONN_01.jpg,connector,,true,
+3F_3135_to3017_01,3135,3F,to3017,../view/3F/3135/3F_3135_to3017_01.jpg,corridor,3017,true,
+3F_3135_to3140_01,3135,3F,to3140,../view/3F/3135/3F_3135_to3140_01.jpg,corridor,3140,true,
+3F_3136_CONN_01,3136,3F,CONN,../view/3F/3136/3F_3136_CONN_01.jpg,connector,,true,
+3F_3136_from3140_01,3136,3F,from3140,../view/3F/3136/3F_3136_from3140_01.jpg,corridor,,true,view_label=from3140
+3F_3136_from3140_02,3136,3F,from3140,../view/3F/3136/3F_3136_from3140_02.jpg,corridor,,true,view_label=from3140
+3F_3140_from3136_01,3140,3F,from3136,../view/3F/3140/3F_3140_from3136_01.jpg,corridor,,true,view_label=from3136
+3F_3140_to3016_01,3140,3F,to3016,../view/3F/3140/3F_3140_to3016_01.jpg,corridor,3016,true,
+3F_3140_to3135_01,3140,3F,to3135,../view/3F/3140/3F_3140_to3135_01.jpg,corridor,3135,true,
+3F_3141_axis_to3131_01,3141,3F,axis_to3131,../view/3F/3141/3F_3141_axis_to3131_01.jpg,corridor,3131,true,view_label=axis_to3131
+3F_3141_axis_to3142_01,3141,3F,axis_to3142,../view/3F/3141/3F_3141_axis_to3142_01.jpg,corridor,3142,true,view_label=axis_to3142
+3F_3141_context_01,3141,3F,context,../view/3F/3141/3F_3141_context_01.jpg,context,,true,view_label=context
+3F_3141_context_02,3141,3F,context,../view/3F/3141/3F_3141_context_02.jpg,context,,true,view_label=context
+3F_3141_from_axis_01,3141,3F,from_axis,../view/3F/3141/3F_3141_from_axis_01.jpg,corridor,,true,view_label=from_axis
+3F_3141_from_axis_02,3141,3F,from_axis,../view/3F/3141/3F_3141_from_axis_02.jpg,corridor,,true,view_label=from_axis
+3F_3143_CONN_01,3143,3F,CONN,../view/3F/3143/3F_3143_CONN_01.jpg,connector,,true,
+3F_3143_back_to3132_01,3143,3F,back_to3132,../view/3F/3143/3F_3143_back_to3132_01.jpg,corridor,3132,true,
+3F_3144_CONN_01,3144,3F,CONN,../view/3F/3144/3F_3144_CONN_01.jpg,connector,,true,
+3F_3147_DEST_01,3147,3F,DEST,../view/3F/3147/3F_3147_DEST_01.jpg,destination,,false,destination confirmation candidate
+3F_3147_from3140_01,3147,3F,from3140,../view/3F/3147/3F_3147_from3140_01.jpg,corridor,,true,view_label=from3140
+3F_3147_from3140_02,3147,3F,from3140,../view/3F/3147/3F_3147_from3140_02.jpg,corridor,,true,view_label=from3140
+3F_3148_CONN_01,3148,3F,CONN,../view/3F/3148/3F_3148_CONN_01.jpg,connector,,true,
+3F_3149_ENT_01,3149,3F,ENT,../view/3F/3149/3F_3149_ENT_01.jpg,door,,false,room entrance candidate
+3F_3150_DEST_01,3150,3F,DEST,../view/3F/3150/3F_3150_DEST_01.jpg,destination,,false,destination confirmation candidate
+3F_3150_from3132_01,3150,3F,from3132,../view/3F/3150/3F_3150_from3132_01.jpg,corridor,,true,view_label=from3132
+3F_3150_from3132_02,3150,3F,from3132,../view/3F/3150/3F_3150_from3132_02.jpg,corridor,,true,view_label=from3132
+3F_3153_from3048_01,3153,3F,from3048,../view/3F/3153/3F_3153_from3048_01.jpg,corridor,,true,view_label=from3048
+3F_3153_from3050_01,3153,3F,from3050,../view/3F/3153/3F_3153_from3050_01.jpg,corridor,,true,view_label=from3050

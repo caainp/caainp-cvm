@@ -128,6 +128,13 @@ def _is_missing_scalar(value: Any) -> bool:
     return s == "" or s.lower() in {"nan", "none", "null"}
 
 
+def _text_has_number(value: Any, number: int) -> bool:
+    if _is_missing_scalar(value):
+        return False
+    import re
+    return re.search(rf"(?<!\d){int(number)}(?!\d)", str(value)) is not None
+
+
 def load_map_csv(
     csv_path: str,
     id_column: str = "node_id",
@@ -183,8 +190,13 @@ def load_map_csv(
                 continue
             extra[c] = row.get(c, None)
 
-        # Normalize sparse CSV metadata: a ROOM node's natural anchor is its own room/node id.
-        if str(type_val).upper() == "ROOM" and _is_missing_scalar(extra.get("anchor_room")):
+        # Normalize sparse CSV metadata only when the room id is visibly represented in text.
+        # This avoids treating internal ROOM ids (e.g. offices without numeric signage) as OCR anchors.
+        if (
+            str(type_val).upper() == "ROOM"
+            and _is_missing_scalar(extra.get("anchor_room"))
+            and _text_has_number(desc_val, node_id)
+        ):
             extra["anchor_room"] = str(node_id)
 
         rec = NodeRecord(

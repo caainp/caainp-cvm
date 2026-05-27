@@ -285,6 +285,188 @@ def ocr_number_weights_from_counts(ocr_nums: List[str], counts: Dict[str, int]) 
         weights[str(n)] = 0.35 + 0.65 * (float(c) / float(max_count))
     return weights
 
+
+def _ocr_item_parts(item: Any) -> Tuple[Optional[Any], str, Optional[float]]:
+    if isinstance(item, str):
+        return None, item, None
+    if isinstance(item, (list, tuple)):
+        if len(item) >= 3:
+            try:
+                return item[0], str(item[1]), float(item[2])
+            except Exception:
+                return item[0], str(item[1]), None
+        if len(item) >= 2:
+            return item[0], str(item[1]), None
+    return None, str(item), None
+
+
+def _ocr_box_xyxy(
+    box: Any,
+    *,
+    origin_x: float,
+    origin_y: float,
+    coord_scale: float,
+    image_w: int,
+    image_h: int,
+) -> Optional[List[int]]:
+    if box is None:
+        return None
+    try:
+        pts = np.asarray(box, dtype=np.float32).reshape(-1, 2)
+        if pts.size == 0:
+            return None
+        div = max(float(coord_scale), 1e-6)
+        xs = (pts[:, 0] / div) + float(origin_x)
+        ys = (pts[:, 1] / div) + float(origin_y)
+        x1 = int(max(0, min(image_w - 1, np.floor(float(xs.min())))))
+        y1 = int(max(0, min(image_h - 1, np.floor(float(ys.min())))))
+        x2 = int(max(0, min(image_w - 1, np.ceil(float(xs.max())))))
+        y2 = int(max(0, min(image_h - 1, np.ceil(float(ys.max())))))
+        return [x1, y1, x2, y2]
+    except Exception:
+        return None
+
+
+def _bbox_norm_xyxy(bbox: Optional[List[int]], image_w: int, image_h: int) -> Optional[List[float]]:
+    if bbox is None or image_w <= 0 or image_h <= 0:
+        return None
+    x1, y1, x2, y2 = bbox
+    return [
+        round(float(x1) / float(image_w), 4),
+        round(float(y1) / float(image_h), 4),
+        round(float(x2) / float(image_w), 4),
+        round(float(y2) / float(image_h), 4),
+    ]
+
+
+def _bbox_area_ratio(bbox: Optional[List[int]], image_w: int, image_h: int) -> Optional[float]:
+    if bbox is None or image_w <= 0 or image_h <= 0:
+        return None
+    x1, y1, x2, y2 = bbox
+    area = max(0, x2 - x1) * max(0, y2 - y1)
+    return round(float(area) / float(image_w * image_h), 6)
+
+
+def _bbox_position_label(bbox: Optional[List[int]], image_w: int, image_h: int) -> Optional[str]:
+    if bbox is None or image_w <= 0 or image_h <= 0:
+        return None
+    x1, y1, x2, y2 = bbox
+    cx = (x1 + x2) / 2.0 / float(image_w)
+    cy = (y1 + y2) / 2.0 / float(image_h)
+    horizontal = "left" if cx < 0.33 else "center" if cx < 0.67 else "right"
+    vertical = "top" if cy < 0.33 else "middle" if cy < 0.67 else "bottom"
+    return f"{horizontal}_{vertical}"
+
+
+def _readtext_with_observations(
+    reader: Any,
+    image: np.ndarray,
+    *,
+    source: str,
+    image_w: int,
+    image_h: int,
+    readtext_kwargs: Optional[Dict[str, Any]] = None,
+    origin_x: float = 0.0,
+    origin_y: float = 0.0,
+    coord_scale: float = 1.0,
+    roi_index: Optional[int] = None,
+    roi_bbox: Optional[Tuple[int, int, int, int]] = None,
+    crop_variant: Optional[str] = None,
+    scale: float = 1.0,
+    preprocessed: bool = False,
+) -> Tuple[List[str], List[Dict[str, Any]]]:
+    try:
+        items = reader.readtext(image, detail=1, **(readtext_kwargs or {})) or []
+    except Exception:
+        return [], []
+
+    texts: List[str] = []
+    observations: List[Dict[str, Any]] = []
+    for item in items:
+        box, text, conf = _ocr_item_parts(item)
+        texts.append(text)
+        bbox = _ocr_box_xyxy(
+            box,
+            origin_x=origin_x,
+            origin_y=origin_y,
+            coord_scale=coord_scale,
+            image_w=image_w,
+            image_h=image_h,
+        )
+        obs: Dict[str, Any] = {
+            "text": text,
+            "numbers": extract_room_numbers_from_text([text]),
+            "confidence": round(float(conf), 4) if conf is not None else None,
+            "source": source,
+            "bbox_xyxy": bbox,
+            "bbox_norm_xyxy": _bbox_norm_xyxy(bbox, image_w, image_h),
+            "bbox_area_ratio": _bbox_area_ratio(bbox, image_w, image_h),
+            "position": _bbox_position_label(bbox, image_w, image_h),
+            "roi_index": roi_index,
+            "roi_bbox_xywh": list(roi_bbox) if roi_bbox is not None else None,
+            "crop_variant": crop_variant,
+            "scale": round(float(scale), 3),
+            "preprocessed": bool(preprocessed),
+        }
+        observations.append(obs)
+    return texts, observations
+
+
+def summarize_ocr_observations(observations: List[Dict[str, Any]]) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+    source_summary: Dict[str, Any] = {
+        "total_observations": len(observations),
+        "number_observations": 0,
+        "sources": {},
+    }
+    per_number: Dict[str, Dict[str, Any]] = {}
+
+    for obs in observations:
+        source = str(obs.get("source") or "unknown")
+        sources = source_summary["sources"]
+        if source not in sources:
+            sources[source] = {"observations": 0, "number_observations": 0}
+        sources[source]["observations"] += 1
+
+        nums = obs.get("numbers") or []
+        if nums:
+            source_summary["number_observations"] += 1
+            sources[source]["number_observations"] += 1
+
+        for num in nums:
+            key = str(num)
+            entry = per_number.setdefault(
+                key,
+                {
+                    "number": key,
+                    "count": 0,
+                    "sources": {},
+                    "positions": [],
+                    "sample_texts": [],
+                    "max_confidence": None,
+                    "min_area_ratio": None,
+                    "max_area_ratio": None,
+                },
+            )
+            entry["count"] += 1
+            entry["sources"][source] = entry["sources"].get(source, 0) + 1
+            pos = obs.get("position")
+            if pos is not None and pos not in entry["positions"]:
+                entry["positions"].append(pos)
+            text = obs.get("text")
+            if text and text not in entry["sample_texts"] and len(entry["sample_texts"]) < 5:
+                entry["sample_texts"].append(text)
+            conf = obs.get("confidence")
+            if conf is not None:
+                entry["max_confidence"] = conf if entry["max_confidence"] is None else max(entry["max_confidence"], conf)
+            area = obs.get("bbox_area_ratio")
+            if area is not None:
+                entry["min_area_ratio"] = area if entry["min_area_ratio"] is None else min(entry["min_area_ratio"], area)
+                entry["max_area_ratio"] = area if entry["max_area_ratio"] is None else max(entry["max_area_ratio"], area)
+
+    number_sources = sorted(per_number.values(), key=lambda d: (-int(d["count"]), str(d["number"])))
+    return source_summary, number_sources
+
+
 def ocr_hints(image_path: str, languages: Optional[List[str]] = None) -> List[str]:
     if easyocr is None:
         logger.warning("easyocr not available; skipping OCR hints")
@@ -603,6 +785,128 @@ def ocr_hints_with_roi(
     return nums
 
 
+def ocr_hints_with_roi_details(
+    image_path: str,
+    languages: Optional[List[str]] = None,
+    max_rois: int = 12,
+    readtext_kwargs: Optional[Dict[str, Any]] = None,
+    preproc_opts: Optional[Dict[str, Any]] = None,
+) -> Tuple[List[str], List[str], List[Dict[str, Any]]]:
+    if easyocr is None:
+        logger.warning("easyocr not available; skipping OCR hints")
+        return [], [], []
+
+    langs = languages if (languages and len(languages) > 0) else ["ko", "en"]
+    reader = _get_easyocr_reader(tuple(langs), torch.cuda.is_available())
+
+    img_full = cv2.imread(image_path)
+    if img_full is None:
+        return [], [], []
+    H_full, W_full = img_full.shape[:2]
+    preproc_upscale = float((preproc_opts or {}).get("upscale_factor", 1.0) or 1.0)
+
+    texts: List[str] = []
+    observations: List[Dict[str, Any]] = []
+
+    if preproc_opts is not None:
+        proc_full = preprocess_image_for_ocr(img_full, **preproc_opts)
+        t, obs = _readtext_with_observations(
+            reader,
+            proc_full,
+            source="full_preprocessed",
+            image_w=W_full,
+            image_h=H_full,
+            readtext_kwargs=readtext_kwargs,
+            coord_scale=preproc_upscale,
+            preprocessed=True,
+        )
+    else:
+        t, obs = _readtext_with_observations(
+            reader,
+            img_full,
+            source="full_raw",
+            image_w=W_full,
+            image_h=H_full,
+            readtext_kwargs=readtext_kwargs,
+        )
+    texts.extend(t)
+    observations.extend(obs)
+
+    rois = detect_text_rois(image_path, max_rois=max_rois)
+    roi_scales = [1.0, 1.5, 2.0]
+
+    for roi_index, (x, y, w, h) in enumerate(rois):
+        crop = img_full[y:y + h, x:x + w]
+        if crop is None or crop.size == 0:
+            continue
+
+        roi_variants: List[Tuple[np.ndarray, int, int, Tuple[int, int, int, int], str]] = [
+            (crop, x, y, (x, y, w, h), "tight")
+        ]
+        x2, y2, w2, h2 = _expand_roi(
+            x, y, w, h, W_full, H_full,
+            pad_ratio=0.45,
+            min_pad_px=20,
+        )
+        crop_loose = img_full[y2:y2 + h2, x2:x2 + w2]
+        if crop_loose is not None and crop_loose.size > 0:
+            roi_variants.append((crop_loose, x2, y2, (x2, y2, w2, h2), "loose"))
+
+        for base_crop, origin_x, origin_y, roi_bbox, crop_variant in roi_variants:
+            for scale in roi_scales:
+                cur = base_crop
+                if scale > 1.0:
+                    bh, bw = cur.shape[:2]
+                    cur = cv2.resize(
+                        cur,
+                        (max(1, int(round(bw * scale))), max(1, int(round(bh * scale)))),
+                        interpolation=cv2.INTER_CUBIC,
+                    )
+
+                t, obs = _readtext_with_observations(
+                    reader,
+                    cur,
+                    source=f"roi_{crop_variant}_raw",
+                    image_w=W_full,
+                    image_h=H_full,
+                    readtext_kwargs=readtext_kwargs,
+                    origin_x=float(origin_x),
+                    origin_y=float(origin_y),
+                    coord_scale=float(scale),
+                    roi_index=roi_index,
+                    roi_bbox=roi_bbox,
+                    crop_variant=crop_variant,
+                    scale=float(scale),
+                    preprocessed=False,
+                )
+                texts.extend(t)
+                observations.extend(obs)
+
+                if preproc_opts is not None:
+                    proc = preprocess_image_for_ocr(cur, **preproc_opts)
+                    t, obs = _readtext_with_observations(
+                        reader,
+                        proc,
+                        source=f"roi_{crop_variant}_preprocessed",
+                        image_w=W_full,
+                        image_h=H_full,
+                        readtext_kwargs=readtext_kwargs,
+                        origin_x=float(origin_x),
+                        origin_y=float(origin_y),
+                        coord_scale=float(scale) * preproc_upscale,
+                        roi_index=roi_index,
+                        roi_bbox=roi_bbox,
+                        crop_variant=crop_variant,
+                        scale=float(scale),
+                        preprocessed=True,
+                    )
+                    texts.extend(t)
+                    observations.extend(obs)
+
+    nums = extract_room_numbers_from_text(texts)
+    return nums, [str(t) for t in texts], observations
+
+
 def _is_missing_value(value: Any) -> bool:
     if value is None:
         return True
@@ -631,6 +935,28 @@ def _description_has_number(description: Optional[str], number: int) -> bool:
     if _is_missing_value(description):
         return False
     return re.search(rf"(?<!\d){int(number)}(?!\d)", str(description)) is not None
+
+
+def _is_room_type(node_type: Optional[str]) -> bool:
+    return str(node_type or "").upper() == "ROOM"
+
+
+def _has_strong_room_identifier(
+    *,
+    node_id: Optional[int],
+    node_type: Optional[str],
+    description: Optional[str],
+    anchor_rooms: List[int],
+    number: int,
+) -> bool:
+    if not _is_room_type(node_type):
+        return False
+    if number in anchor_rooms:
+        return True
+    if _description_has_number(description, number):
+        return True
+    # Do not treat an internal ROOM node id as visible signage unless metadata/description confirms it.
+    return False
 
 
 def parse_room_range(value: Optional[str]) -> List[Tuple[int, int]]:
@@ -666,7 +992,6 @@ def room_number_match_score(
         return 0.0
     anchor_room = node_meta.get("anchor_room")
     room_range = node_meta.get("room_range")
-    type_norm = str(node_type or "").upper()
 
     ranges = parse_room_range(room_range if isinstance(room_range, str) else str(room_range) if room_range is not None else None)
     anchor_rooms = _canonical_int_tokens(anchor_room)
@@ -679,23 +1004,30 @@ def room_number_match_score(
             continue
         weight = float((ocr_num_weights or {}).get(str(n), 1.0))
         raw_score = 0.0
-        # Exact node/room evidence should dominate corridor range evidence.
-        if node_id is not None:
+        strong_room_identifier = _has_strong_room_identifier(
+            node_id=node_id,
+            node_type=node_type,
+            description=description,
+            anchor_rooms=anchor_rooms,
+            number=vn,
+        )
+        # Exact OCR evidence should dominate only for visible ROOM identifiers.
+        if strong_room_identifier and node_id is not None:
             try:
                 if int(node_id) == vn:
                     raw_score = max(raw_score, 2.0)
             except Exception:
                 pass
         if vn in anchor_rooms:
-            if type_norm == "ROOM":
+            if _is_room_type(node_type):
                 raw_score = max(raw_score, 1.8)
             else:
-                raw_score = max(raw_score, 0.7)
+                raw_score = max(raw_score, 0.25)
         if _description_has_number(description, vn):
-            if type_norm == "ROOM":
+            if _is_room_type(node_type):
                 raw_score = max(raw_score, 1.6)
             else:
-                raw_score = max(raw_score, 0.3)
+                raw_score = max(raw_score, 0.25)
         # Range evidence is useful but must stay weaker than an exact room hit.
         for a, b in ranges:
             if a <= vn <= b:
@@ -710,6 +1042,23 @@ def _ocr_token_matches_node_id(node_id: int, ocr_token: str) -> bool:
         return int(str(ocr_token).strip()) == int(node_id)
     except Exception:
         return False
+
+
+def _ocr_token_matches_visible_room_node(rec: Any, node_id: int, ocr_token: str) -> bool:
+    try:
+        vn = int(str(ocr_token).strip())
+    except Exception:
+        return False
+    if not _ocr_token_matches_node_id(node_id, ocr_token):
+        return False
+    extra = getattr(rec, "extra", {}) or {}
+    return _has_strong_room_identifier(
+        node_id=node_id,
+        node_type=getattr(rec, "node_type", None),
+        description=getattr(rec, "description", None),
+        anchor_rooms=_canonical_int_tokens(extra.get("anchor_room")),
+        number=vn,
+    )
 
 
 def geometric_verification_score(
@@ -872,6 +1221,7 @@ def localize_image(
     ocr_link_threshold: Optional[float] = None,
     ocr_decoder: Optional[str] = None,
     ocr_beam_width: Optional[int] = None,
+    ocr_debug_max_observations: int = 200,
 ) -> dict:
     # load map
     graph, node_records, emb_matrix, node_ids = load_map_csv_cached(csv_path)
@@ -918,6 +1268,9 @@ def localize_image(
     # optional OCR hints
     ocr_nums: List[str] = []
     ocr_raw_texts: List[str] = []
+    ocr_observations: List[Dict[str, Any]] = []
+    ocr_source_summary: Dict[str, Any] = {}
+    ocr_number_sources: List[Dict[str, Any]] = []
     ocr_num_counts: Dict[str, int] = {}
     ocr_num_weights: Dict[str, float] = {}
     ocr_pool_merge_added = 0
@@ -948,13 +1301,12 @@ def localize_image(
         if ocr_beam_width is not None:
             readtext_kwargs["beamWidth"] = int(ocr_beam_width)
         if ocr_use_roi:
-            ocr_nums, ocr_raw_texts = ocr_hints_with_roi(
+            ocr_nums, ocr_raw_texts, ocr_observations = ocr_hints_with_roi_details(
                 image_path,
                 languages=langs_eff,
                 max_rois=ocr_max_rois,
                 readtext_kwargs=readtext_kwargs,
                 preproc_opts=preproc_opts,
-                return_texts=True,
             )
         else:
             if easyocr is None:
@@ -965,13 +1317,25 @@ def localize_image(
                 if img_full is not None:
                     img_full = preprocess_image_for_ocr(img_full, **preproc_opts)
                     try:
-                        texts = reader.readtext(img_full, detail=0, **readtext_kwargs) or []
-                        ocr_raw_texts = [str(t) for t in texts]
-                        ocr_nums = extract_room_numbers_from_text(texts)
+                        raw_img = cv2.imread(image_path)
+                        H_full, W_full = raw_img.shape[:2] if raw_img is not None else img_full.shape[:2]
+                        preproc_upscale = float(preproc_opts.get("upscale_factor", 1.0) or 1.0)
+                        ocr_raw_texts, ocr_observations = _readtext_with_observations(
+                            reader,
+                            img_full,
+                            source="full_preprocessed",
+                            image_w=W_full,
+                            image_h=H_full,
+                            readtext_kwargs=readtext_kwargs,
+                            coord_scale=preproc_upscale,
+                            preprocessed=True,
+                        )
+                        ocr_nums = extract_room_numbers_from_text(ocr_raw_texts)
                     except Exception:
                         ocr_nums = []
         # Log recognized OCR numbers for debugging
         logger.info(f"OCR raw nums: {ocr_nums} (langs={langs_eff})")
+        ocr_source_summary, ocr_number_sources = summarize_ocr_observations(ocr_observations)
         ocr_num_counts = extract_room_number_counts_from_text(ocr_raw_texts)
         ocr_num_weights = ocr_number_weights_from_counts(ocr_nums, ocr_num_counts)
         if ocr_nums:
@@ -990,7 +1354,7 @@ def localize_image(
                     node_type=rec.node_type,
                     ocr_num_weights=ocr_num_weights,
                 )
-                id_hit = any(_ocr_token_matches_node_id(nid, on) for on in ocr_nums)
+                id_hit = any(_ocr_token_matches_visible_room_node(rec, nid, on) for on in ocr_nums)
                 if id_hit or sc >= thr:
                     row_idx = int(node_id_to_row[nid])
                     if row_idx not in pool_set:
@@ -1074,6 +1438,10 @@ def localize_image(
         "debug": {
             "ocr_numbers": ocr_nums,
             "ocr_raw_texts": ocr_raw_texts,
+            "ocr_observation_count": int(len(ocr_observations)),
+            "ocr_observations": ocr_observations[: max(0, int(ocr_debug_max_observations))],
+            "ocr_source_summary": ocr_source_summary,
+            "ocr_number_sources": ocr_number_sources,
             "ocr_num_counts": ocr_num_counts,
             "ocr_num_weights": {k: round(float(v), 4) for k, v in ocr_num_weights.items()},
             "ocr_langs": list(langs_eff) if use_ocr else [],
@@ -1134,6 +1502,7 @@ def main():
     ap.add_argument("--ocr_link_threshold", type=float, default=None, help="EasyOCR link_threshold")
     ap.add_argument("--ocr_decoder", type=str, default=None, help="EasyOCR decoder (greedy or beamsearch)")
     ap.add_argument("--ocr_beam_width", type=int, default=None, help="EasyOCR beamWidth for beamsearch")
+    ap.add_argument("--ocr_debug_max_observations", type=int, default=200, help="Max OCR observation rows to include in debug output")
     args = ap.parse_args()
 
     device = "cuda" if args.device.startswith("cuda") and torch.cuda.is_available() else "cpu"
@@ -1175,6 +1544,7 @@ def main():
         ocr_link_threshold=getattr(args, "ocr_link_threshold", None),
         ocr_decoder=getattr(args, "ocr_decoder", None),
         ocr_beam_width=getattr(args, "ocr_beam_width", None),
+        ocr_debug_max_observations=int(getattr(args, "ocr_debug_max_observations", 200)),
     )
     print(out)
 

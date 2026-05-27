@@ -1,0 +1,110 @@
+﻿node_id,floor,macro_zone,micro_zone,node_role,type,name_ko,description,neighbors,neighbor_move_types,pos_x,pos_y,connector_group,room_range,anchor_room,ocr_primary,ocr_secondary,landmark_tags
+3002,3,3F,3F_C1_ANCHOR,ANCHOR,GATE,3층 C1 앞,전시장 C1 출입구 전면 앵커 지점,3131,WALK,360,285,,,,C1,전시장C홀,c1_gate;upper_anchor;hall_sign
+3003,3,3F,3F_C3_ANCHOR,ANCHOR,GATE,3층 C3 앞,전시장 C3 출입구 전면 앵커 지점,3142,WALK,372,52,,,,C3,전시장C홀,c3_gate;upper_anchor;hall_sign
+3004,3,3F,3F_D1_ANCHOR,ANCHOR,GATE,3층 D1 앞,전시장 D1 출입구 전면 앵커 지점,3017,WALK,615,420,,,,D1,전시장D홀,d1_gate;upper_anchor;hall_sign
+3005,3,3F,3F_D2_ANCHOR,ANCHOR,GATE,3층 D2 앞,전시장 D2 출입구 전면 앵커 지점,3019,WALK,719,420,,,,D2,전시장D홀,d2_gate;upper_anchor;hall_sign
+3008,3,3F,3F_AUD_ENTRY,DEST,ROOM,3층 오디토리움 입구,오디토리움 진입 전면 목적지 지점,3020,WALK,821,208,,,,오디토리움,,auditorium_entry;large_facility
+3009,3,3F,3F_MR1A_FRONT,DEST,ROOM,3층 미팅룸 1A 앞,미팅룸 1A 전면 목적지 지점,3020,WALK,831,334,,,,미팅룸1A,오디토리움,meeting_room;east_branch
+3010,3,3F,3F_MR2A_FRONT,DEST,ROOM,3층 미팅룸 2A 앞,미팅룸 2A 전면 목적지 지점,3022,WALK,831,36,,,,미팅룸2A,오디토리움,meeting_room;upper_east
+3013,3,3F,3F_WEST_CORE_LOWER_JUNCTION,NAV,CORRIDOR,3층 서측 코어 하부 분기점,서측 코어 하부 통로와 E구역 서측 세로 통로가 만나는 하부 분기 지점,3044;3014;3132,WALK;WALK;WALK,286,535,,,,서측코어,하부복도;E구역서측,west_core;lower_junction;decision_point;ezone_link
+3014,3,3F,3F_E_WEST_FRONT,NAV,CORRIDOR,3층 E존 서측 전면부,3013 하부 통로와 3132 상부 연결부 사이의 E구역 서측 세로 통로,3013;3132;3015;3080;3148;3149,WALK;WALK;WALK;WALK;WALK;WALK,350,466,,,,E구역,기도실;E구역서측,e_zone_west_vertical;prayer_room_link;decision_point
+3015,3,3F,3F_E_CENTER_FRONT,NAV,CORRIDOR,3층 E존 중앙 전면부,"E구역 하부 backbone과 E1-E4, E5-E6, E7-E8 내부 복도 입구가 갈라지는 중앙 구간",3014;3016;3021;3137;3138,WALK;WALK;WALK;WALK;WALK,422,521,,,,E구역,E1-E8;하부복도,e_zone_front;center_backbone;entry_split;decision_point
+3016,3,3F,3F_E_EAST_LOWER_JUNCTION,NAV,CORRIDOR,3층 E구역 동단 하부 분기점,E구역 하단 backbone에서 D1 남측 연결 방향으로 이어지는 동단 굴절 지점,3015;3140,WALK;WALK,560,521,,,,E6,D1;하부복도,e_zone_front;east_lower_junction;d1_route;decision_point
+3017,3,3F,3F_D1_LOWER,NAV,CORRIDOR,3층 D1 하단부,D1 하단 복도 접근 및 D1 앵커 방향 연결 지점,3135;3018;3004,WALK;WALK;WALK,615,446,,,,D1,전시장D홀,d1_lower;backbone;anchor_link
+3018,3,3F,3F_D12_LOWER_CENTER,NAV,CORRIDOR,3층 D1-D2 하단 중앙,D1과 D2 하단부 사이 backbone 핵심 분기 지점,3017;3019,WALK;WALK,669,446,,,,D홀,D1;D2,backbone_center;decision_point
+3019,3,3F,3F_D2_LOWER,NAV,CORRIDOR,3층 D2 하단부,D2 하단 복도 접근 지점,3018;3020;3005,WALK;WALK;WALK,719,446,,,,D2,전시장D홀,d2_lower;backbone;anchor_link
+3020,3,3F,3F_EAST_JUNCTION,NAV,LOBBY,3층 오디토리움 남측 분기점,오디토리움과 미팅룸 1A 1B 1C 및 동측 코어로 갈라지는 분기 지점,3019;3022;3023;3008;3009;3125;3126,WALK;WALK;WALK;WALK;WALK;WALK;WALK,880,446,,,,오디토리움,미팅룸1A;미팅룸1B;미팅룸1C,east_junction;auditorium_lower;decision_point
+3021,3,3F,3F_E_EAST_LINK,NAV,CORRIDOR,3층 E7-E8 연결부,3015 하부 backbone에서 E7 E8 전면으로 이어지는 동측 내부 복도 입구,3015;3122;3123,WALK;WALK;WALK,480,470,,,,E7,E8;E구역,e_zone_entry;e7_e8;east_link
+3022,3,3F,3F_AUD_NE_JUNCTION,NAV,LOBBY,3층 오디토리움 북동측 분기점,미팅룸 2A 2B 2C와 동측 에스컬레이터로 갈라지는 상부 분기 지점,3020;3010;3127;3128;3130,WALK;WALK;WALK;WALK;WALK,880,208,,,,미팅룸2A,미팅룸2B;미팅룸2C;오디토리움,auditorium_upper;junction;east_side
+3023,3,3F,3F_EAST_ELEVATOR_CORE,CONN,ELEVATOR,3층 오디토리움 동측 엘리베이터,오디토리움 동측 하부 엘리베이터 연결 지점,3020,WALK,900,505,ELEV_CORE_E,,,엘리베이터,오디토리움;동측코어,elevator;vertical_core;east_side
+3024,3,3F,3F_E1_FRONT,DEST,ROOM,3층 E1 앞,컨퍼런스룸 E1 전면 목적지 지점,3137,WALK,384,466,,,,E1,컨퍼런스룸,conference_room;e1_front
+3025,3,3F,3F_E3_FRONT,DEST,ROOM,3층 E3 앞,컨퍼런스룸 E3 전면 목적지 지점,3137,WALK,384,448,,,,E3,컨퍼런스룸,conference_room;e3_front
+3026,3,3F,3F_E5_FRONT,DEST,ROOM,3층 컨퍼런스룸 E5 앞,컨퍼런스룸 E5 전면 목적지 지점,3138,WALK,434,479,,,,E5,컨퍼런스룸,conference_room;e5_front
+3043,3,3F,3F_WEST_301_306_MAIN,NAV,CORRIDOR,3층 서측 301-306 구간 복도,컨퍼런스룸 301~306 전면을 담당하는 서측 하단 방 앞 통로,3044;3070;3071;3072;3073;3074;3075;3076;3077;3078,WALK;WALK;WALK;WALK;WALK;WALK;WALK;WALK;WALK;WALK,143,530,,,,301,301;302;303;304A;304B;305A;305B;306,west_band;301_306;room_band_corridor
+3044,3,3F,3F_WEST_301_306_EAST,NAV,CORRIDOR,3층 서측 301-306 동측 연결부,301~306 방 앞 통로에서 서측 코어 하부 및 307~308 동측 연결부로 이어지는 동측 연결 지점,3043;3046;3013;3079,WALK;WALK;WALK;WALK,248,535,,,,303,301-306;장애인화장실;서측코어,west_connector;301_306;east_side;restroom_link
+3045,3,3F,3F_WEST_307_308_MAIN,NAV,CORRIDOR,3층 서측 307-308 구간 복도,컨퍼런스룸 307~308 전면을 담당하는 서측 중하단 방 앞 통로,3046;3082;3083;3084;3085;3086;3087,WALK;WALK;WALK;WALK;WALK;WALK;WALK,143,420,,,,307,307A;307B;307C;308A;308B;308C,west_band;307_308;room_band_corridor
+3046,3,3F,3F_WEST_307_308_EAST,NAV,CORRIDOR,3층 서측 307-308 동측 연결부,307~308 방 앞 통로와 3044-3048 세로 연결축 및 3132 상부 연결부가 만나는 동측 연결 지점,3044;3045;3048;3132,WALK;WALK;WALK;WALK,248,420,,,,308A,307-308;상부연결;서측코어,west_connector;307_308;vertical_spine;upper_link
+3047,3,3F,3F_WEST_309_316_MAIN,NAV,CORRIDOR,3층 서측 309-316 구간 복도,컨퍼런스룸 309~316 전면을 담당하는 서측 중앙 방 앞 통로,3048;3091;3092;3093;3094;3095;3096;3097;3098;3099;3100;3101;3102,WALK;WALK;WALK;WALK;WALK;WALK;WALK;WALK;WALK;WALK;WALK;WALK;WALK,143,275,,,,309,309;310A;310B;311A;311B;312;313;314A;314B;315A;315B;316,west_band;309_316;room_band_corridor
+3048,3,3F,3F_WEST_C1C2_EAST_LINK,NAV,CORRIDOR,3층 서측 C1-C2 동측 연결부,309~316 방 앞 통로와 C1/C2 상부 연결부를 잇는 동측 세로 연결 지점,3046;3047;3050;3131,WALK;WALK;WALK;WALK,248,275,,,,C1,C1;C2;309-316,c_anchor_link;c1_c2;vertical_spine;east_side
+3049,3,3F,3F_WEST_317_318_MAIN,NAV,CORRIDOR,3층 서측 317-318 구간 복도,컨퍼런스룸 317~318 전면을 담당하는 서측 중상단 방 앞 통로,3050;3103;3104;3105;3106;3107;3108,WALK;WALK;WALK;WALK;WALK;WALK;WALK,143,145,,,,317,317A;317B;317C;318A;318B;318C,west_band;317_318;room_band_corridor
+3050,3,3F,3F_WEST_317_318_EAST,NAV,CORRIDOR,3층 서측 317-318 동측 연결부,317~318 방 앞 통로와 C3/C4 방향 상부 연결축을 잇는 동측 연결 지점,3048;3049;3052;3141;3153,WALK;WALK;WALK;WALK;WALK,248,145,,,,318A,317-318;C3;C4,west_connector;317_318;vertical_spine;east_side
+3051,3,3F,3F_WEST_319_325_MAIN,NAV,CORRIDOR,3층 서측 319-325 구간 복도,컨퍼런스룸 319~325 전면을 담당하는 서측 상단 방 앞 통로,3052;3110;3111;3112;3113;3114;3115;3116;3117;3118,WALK;WALK;WALK;WALK;WALK;WALK;WALK;WALK;WALK;WALK,143,42,,,,319,319;320B;321A;321B;323;324A;324B;325A;325B,west_band;319_325;room_band_corridor
+3052,3,3F,3F_WEST_C3C4_EAST_LINK,NAV,CORRIDOR,3층 서측 C3-C4 동측 연결부,319~325 방 앞 통로와 C3/C4 앵커 방향을 잇는 동측 상단 연결 지점,3050;3051;3142,WALK;WALK;WALK,248,42,,,,C3,C3;C4;319-325,c_anchor_link;c3_c4;vertical_spine;east_side
+3062,3,3F,3F_C2_ANCHOR,ANCHOR,GATE,3층 C2 앞,전시장 C2 출입구 전면 앵커 지점,3131,WALK,360,265,,,,C2,전시장C홀,c2_gate;upper_anchor;hall_sign
+3063,3,3F,3F_C4_ANCHOR,ANCHOR,GATE,3층 C4 앞,전시장 C4 출입구 전면 앵커 지점,3142,WALK,372,32,,,,C4,전시장C홀,c4_gate;upper_anchor;hall_sign
+3070,3,3F,3F_301A_FRONT,DEST,ROOM,3층 컨퍼런스룸 301A 앞,컨퍼런스룸 301A 전면 목적지 지점,3043,WALK,180,555,,,,301A,컨퍼런스룸,conference_room;301a_front
+3071,3,3F,3F_301B_FRONT,DEST,ROOM,3층 컨퍼런스룸 301B 앞,컨퍼런스룸 301B 전면 목적지 지점,3043,WALK,120,555,,,,301B,컨퍼런스룸,conference_room;301b_front
+3072,3,3F,3F_302_FRONT,DEST,ROOM,3층 컨퍼런스룸 302 앞,컨퍼런스룸 302 전면 목적지 지점,3043,WALK,62,540,,,,302,컨퍼런스룸,conference_room;302_front
+3073,3,3F,3F_303_FRONT,DEST,ROOM,3층 컨퍼런스룸 303 앞,컨퍼런스룸 303 전면 목적지 지점,3043,WALK,199,505,,,,303,컨퍼런스룸,conference_room;303_front
+3074,3,3F,3F_304A_FRONT,DEST,ROOM,3층 컨퍼런스룸 304A 앞,컨퍼런스룸 304A 전면 목적지 지점,3043,WALK,171,505,,,,304A,컨퍼런스룸,conference_room;304a_front
+3075,3,3F,3F_304B_FRONT,DEST,ROOM,3층 컨퍼런스룸 304B 앞,컨퍼런스룸 304B 전면 목적지 지점,3043,WALK,143,505,,,,304B,컨퍼런스룸,conference_room;304b_front
+3076,3,3F,3F_305A_FRONT,DEST,ROOM,3층 컨퍼런스룸 305A 앞,컨퍼런스룸 305A 전면 목적지 지점,3043,WALK,117,505,,,,305A,컨퍼런스룸,conference_room;305a_front
+3077,3,3F,3F_305B_FRONT,DEST,ROOM,3층 컨퍼런스룸 305B 앞,컨퍼런스룸 305B 전면 목적지 지점,3043,WALK,89,505,,,,305B,컨퍼런스룸,conference_room;305b_front
+3078,3,3F,3F_306_FRONT,DEST,ROOM,3층 컨퍼런스룸 306 앞,컨퍼런스룸 306 전면 목적지 지점,3043,WALK,62,505,,,,306,컨퍼런스룸,conference_room;306_front
+3079,3,3F,3F_WEST_RESTROOM,DEST,RESTROOM,3층 서측 화장실,3044-3046 연결 통로에 위치한 화장실 목적지 지점,3044,WALK,261,486,,,,화장실,서측연결통로,restroom;west_corridor
+3080,3,3F,3F_MUSLIM_PRAYER_ROOM,DEST,ROOM,3층 무슬림 전용 기도실,무슬림 전용 기도실 목적지 지점,3014,WALK,324,476,,,,무슬림전용기도실,기도실,prayer_room;facility
+3082,3,3F,3F_307A_FRONT,DEST,ROOM,3층 컨퍼런스룸 307A 앞,컨퍼런스룸 307A 전면 목적지 지점,3045,WALK,176,441,,,,307A,컨퍼런스룸,conference_room;307a_front
+3083,3,3F,3F_307B_FRONT,DEST,ROOM,3층 컨퍼런스룸 307B 앞,컨퍼런스룸 307B 전면 목적지 지점,3045,WALK,130,441,,,,307B,컨퍼런스룸,conference_room;307b_front
+3084,3,3F,3F_307C_FRONT,DEST,ROOM,3층 컨퍼런스룸 307C 앞,컨퍼런스룸 307C 전면 목적지 지점,3045,WALK,84,441,,,,307C,컨퍼런스룸,conference_room;307c_front
+3085,3,3F,3F_308A_FRONT,DEST,ROOM,3층 컨퍼런스룸 308A 앞,컨퍼런스룸 308A 전면 목적지 지점,3045,WALK,176,401,,,,308A,컨퍼런스룸,conference_room;308a_front
+3086,3,3F,3F_308B_FRONT,DEST,ROOM,3층 컨퍼런스룸 308B 앞,컨퍼런스룸 308B 전면 목적지 지점,3045,WALK,130,401,,,,308B,컨퍼런스룸,conference_room;308b_front
+3087,3,3F,3F_308C_FRONT,DEST,ROOM,3층 컨퍼런스룸 308C 앞,컨퍼런스룸 308C 전면 목적지 지점,3045,WALK,88,401,,,,308C,컨퍼런스룸,conference_room;308c_front
+3091,3,3F,3F_309_FRONT,DEST,ROOM,3층 컨퍼런스룸 309 앞,컨퍼런스룸 309 전면 목적지 지점,3047,WALK,226,308,,,,309,컨퍼런스룸,conference_room;309_front
+3092,3,3F,3F_310A_FRONT,DEST,ROOM,3층 컨퍼런스룸 310A 앞,컨퍼런스룸 310A 전면 목적지 지점,3047,WALK,192,308,,,,310A,컨퍼런스룸,conference_room;310a_front
+3093,3,3F,3F_310B_FRONT,DEST,ROOM,3층 컨퍼런스룸 310B 앞,컨퍼런스룸 310B 전면 목적지 지점,3047,WALK,158,308,,,,310B,컨퍼런스룸,conference_room;310b_front
+3094,3,3F,3F_311A_FRONT,DEST,ROOM,3층 컨퍼런스룸 311A 앞,컨퍼런스룸 311A 전면 목적지 지점,3047,WALK,126,308,,,,311A,컨퍼런스룸,conference_room;311a_front
+3095,3,3F,3F_311B_FRONT,DEST,ROOM,3층 컨퍼런스룸 311B 앞,컨퍼런스룸 311B 전면 목적지 지점,3047,WALK,94,308,,,,311B,컨퍼런스룸,conference_room;311b_front
+3096,3,3F,3F_312_FRONT,DEST,ROOM,3층 컨퍼런스룸 312 앞,컨퍼런스룸 312 전면 목적지 지점,3047,WALK,58,308,,,,312,컨퍼런스룸,conference_room;312_front
+3097,3,3F,3F_313_FRONT,DEST,ROOM,3층 컨퍼런스룸 313 앞,컨퍼런스룸 313 전면 목적지 지점,3047,WALK,226,241,,,,313,컨퍼런스룸,conference_room;313_front
+3098,3,3F,3F_314A_FRONT,DEST,ROOM,3층 컨퍼런스룸 314A 앞,컨퍼런스룸 314A 전면 목적지 지점,3047,WALK,194,241,,,,314A,컨퍼런스룸,conference_room;314a_front
+3099,3,3F,3F_314B_FRONT,DEST,ROOM,3층 컨퍼런스룸 314B 앞,컨퍼런스룸 314B 전면 목적지 지점,3047,WALK,162,241,,,,314B,컨퍼런스룸,conference_room;314b_front
+3100,3,3F,3F_315A_FRONT,DEST,ROOM,3층 컨퍼런스룸 315A 앞,컨퍼런스룸 315A 전면 목적지 지점,3047,WALK,128,241,,,,315A,컨퍼런스룸,conference_room;315a_front
+3101,3,3F,3F_315B_FRONT,DEST,ROOM,3층 컨퍼런스룸 315B 앞,컨퍼런스룸 315B 전면 목적지 지점,3047,WALK,96,241,,,,315B,컨퍼런스룸,conference_room;315b_front
+3102,3,3F,3F_316_FRONT,DEST,ROOM,3층 컨퍼런스룸 316 앞,컨퍼런스룸 316 전면 목적지 지점,3047,WALK,62,241,,,,316,컨퍼런스룸,conference_room;316_front
+3103,3,3F,3F_317A_FRONT,DEST,ROOM,3층 컨퍼런스룸 317A 앞,컨퍼런스룸 317A 전면 목적지 지점,3049,WALK,176,167,,,,317A,컨퍼런스룸,conference_room;317a_front
+3104,3,3F,3F_317B_FRONT,DEST,ROOM,3층 컨퍼런스룸 317B 앞,컨퍼런스룸 317B 전면 목적지 지점,3049,WALK,130,167,,,,317B,컨퍼런스룸,conference_room;317b_front
+3105,3,3F,3F_317C_FRONT,DEST,ROOM,3층 컨퍼런스룸 317C 앞,컨퍼런스룸 317C 전면 목적지 지점,3049,WALK,84,167,,,,317C,컨퍼런스룸,conference_room;317c_front
+3106,3,3F,3F_318A_FRONT,DEST,ROOM,3층 컨퍼런스룸 318A 앞,컨퍼런스룸 318A 전면 목적지 지점,3049,WALK,176,120,,,,318A,컨퍼런스룸,conference_room;318a_front
+3107,3,3F,3F_318B_FRONT,DEST,ROOM,3층 컨퍼런스룸 318B 앞,컨퍼런스룸 318B 전면 목적지 지점,3049,WALK,130,120,,,,318B,컨퍼런스룸,conference_room;318b_front
+3108,3,3F,3F_318C_FRONT,DEST,ROOM,3층 컨퍼런스룸 318C 앞,컨퍼런스룸 318C 전면 목적지 지점,3049,WALK,84,120,,,,318C,컨퍼런스룸,conference_room;318c_front
+3110,3,3F,3F_319_FRONT,DEST,ROOM,3층 컨퍼런스룸 319 앞,컨퍼런스룸 319 전면 목적지 지점,3051,WALK,192,65,,,,319,컨퍼런스룸,conference_room;319_front
+3111,3,3F,3F_320B_FRONT,DEST,ROOM,3층 컨퍼런스룸 320B 앞,컨퍼런스룸 320B 전면 목적지 지점,3051,WALK,158,65,,,,320B,컨퍼런스룸,conference_room;320b_front
+3112,3,3F,3F_321A_FRONT,DEST,ROOM,3층 컨퍼런스룸 321A 앞,컨퍼런스룸 321A 전면 목적지 지점,3051,WALK,126,65,,,,321A,컨퍼런스룸,conference_room;321a_front
+3113,3,3F,3F_321B_FRONT,DEST,ROOM,3층 컨퍼런스룸 321B 앞,컨퍼런스룸 321B 전면 목적지 지점,3051,WALK,94,65,,,,321B,컨퍼런스룸,conference_room;321b_front
+3114,3,3F,3F_323_FRONT,DEST,ROOM,3층 컨퍼런스룸 323 앞,컨퍼런스룸 323 전면 목적지 지점,3051,WALK,226,19,,,,323,컨퍼런스룸,conference_room;323_front
+3115,3,3F,3F_324A_FRONT,DEST,ROOM,3층 컨퍼런스룸 324A 앞,컨퍼런스룸 324A 전면 목적지 지점,3051,WALK,192,19,,,,324A,컨퍼런스룸,conference_room;324a_front
+3116,3,3F,3F_324B_FRONT,DEST,ROOM,3층 컨퍼런스룸 324B 앞,컨퍼런스룸 324B 전면 목적지 지점,3051,WALK,158,19,,,,324B,컨퍼런스룸,conference_room;324b_front
+3117,3,3F,3F_325A_FRONT,DEST,ROOM,3층 컨퍼런스룸 325A 앞,컨퍼런스룸 325A 전면 목적지 지점,3051,WALK,126,19,,,,325A,컨퍼런스룸,conference_room;325a_front
+3118,3,3F,3F_325B_FRONT,DEST,ROOM,3층 컨퍼런스룸 325B 앞,컨퍼런스룸 325B 전면 목적지 지점,3051,WALK,94,19,,,,325B,컨퍼런스룸,conference_room;325b_front
+3120,3,3F,3F_E2_FRONT,DEST,ROOM,3층 컨퍼런스룸 E2 앞,컨퍼런스룸 E2 전면 목적지 지점,3137,WALK,384,484,,,,E2,컨퍼런스룸,conference_room;e2_front
+3121,3,3F,3F_E4_FRONT,DEST,ROOM,3층 컨퍼런스룸 E4 앞,컨퍼런스룸 E4 전면 목적지 지점,3137,WALK,384,429,,,,E4,컨퍼런스룸,conference_room;e4_front
+3122,3,3F,3F_E7_FRONT,DEST,ROOM,3층 컨퍼런스룸 E7 앞,컨퍼런스룸 E7 전면 목적지 지점,3021,WALK,465,452,,,,E7,컨퍼런스룸,conference_room;e7_front
+3123,3,3F,3F_E8_FRONT,DEST,ROOM,3층 컨퍼런스룸 E8 앞,컨퍼런스룸 E8 전면 목적지 지점,3021,WALK,483,434,,,,E8,컨퍼런스룸,conference_room;e8_front
+3124,3,3F,3F_E6_FRONT,DEST,ROOM,3층 컨퍼런스룸 E6 앞,컨퍼런스룸 E6 전면 목적지 지점,3138,WALK,434,462,,,,E6,컨퍼런스룸,conference_room;e6_front
+3125,3,3F,3F_MR1B_FRONT,DEST,ROOM,3층 미팅룸 1B 앞,미팅룸 1B 전면 목적지 지점,3020,WALK,798,334,,,,미팅룸1B,오디토리움,meeting_room;1b_front
+3126,3,3F,3F_MR1C_FRONT,DEST,ROOM,3층 미팅룸 1C 앞,미팅룸 1C 전면 목적지 지점,3020,WALK,770,334,,,,미팅룸1C,오디토리움,meeting_room;1c_front
+3127,3,3F,3F_MR2B_FRONT,DEST,ROOM,3층 미팅룸 2B 앞,미팅룸 2B 전면 목적지 지점,3022,WALK,798,36,,,,미팅룸2B,오디토리움,meeting_room;2b_front
+3128,3,3F,3F_MR2C_FRONT,DEST,ROOM,3층 미팅룸 2C 앞,미팅룸 2C 전면 목적지 지점,3022,WALK,770,36,,,,미팅룸2C,오디토리움,meeting_room;2c_front
+3130,3,3F,3F_EAST_ESCALATOR_CORE,CONN,ESCALATOR,3층 오디토리움 동측 에스컬레이터,오디토리움 동측 상부 에스컬레이터 연결 지점,3022,WALK,932,206,ESC_CORE_E,,,에스컬레이터,오디토리움;동측코어,escalator;vertical_core;east_side
+3131,3,3F,3F_WEST_CORE_UPPER_JUNCTION,NAV,CORRIDOR,3층 서측 코어 상부 분기점,C1/C2 상부 연결부와 서측 코어 내부 수직 이동 요소가 만나는 상부 분기 지점,3002;3048;3132;3133;3134;3062;3141;3144,WALK;WALK;WALK;WALK;WALK;WALK;WALK;WALK,286,275,,,,C1,상부복도;코어구역;C2,west_core;upper_junction;connector_access;decision_point
+3132,3,3F,3F_WEST_CORE_MID_JUNCTION,NAV,CORRIDOR,3층 서측 코어 상부 연결부,3046 동측 연결부에서 3014 E구역 서측 세로 통로 및 3131 상부 코어로 이어지는 연결 지점,3046;3014;3131;3013;3143;3150,WALK;WALK;WALK;WALK;WALK;WALK,286,420,,,,상부연결,E구역;서측코어;상부연결,west_core;upper_link;ezone_link;decision_point
+3133,3,3F,3F_3131_ELEVATOR,CONN,ELEVATOR,3층 3131 인근 엘리베이터,3131 상부 분기점 인근 엘리베이터 연결 지점,3131,WALK,276,300,ELEV_CORE_3131,,,엘리베이터,3131;상부코어,elevator;vertical_core;3131_area
+3134,3,3F,3F_WEST_CORE_ESCALATOR,CONN,ESCALATOR,3층 서측 코어 에스컬레이터,서측 코어 내부 에스컬레이터 연결 지점,3131,WALK,304,295,ESC_CORE_W_MID,,,에스컬레이터,서측코어,escalator;vertical_core;west_side
+3135,3,3F,3F_D1_SOUTHWEST_BEND,NAV,CORRIDOR,3층 D1 남서측 굴절 분기점,D1 남측 복도에서 3017 D1 하단부와 3140 중간 분기점으로 이어지는 굴절 지점,3140;3017,WALK;WALK,560,446,,,,D1,남측복도;굴절구간,d1_bend;junction;decision_point
+3136,3,3F,3F_D1_SOUTH_ESCALATOR,CONN,ESCALATOR,3층 D1 남측 에스컬레이터,3016과 3135를 잇는 복도 중간에서 접근하는 D1 남측 하향 에스컬레이터 연결 지점,3140,WALK,590,470,ESC_CORE_D1_S,,,에스컬레이터,D1남측,escalator;vertical_core;d1_south
+3137,3,3F,3F_E14_ENTRY,NAV,CORRIDOR,3층 E1-E4 내부 복도 입구,3015 하부 backbone에서 E1 E2 E3 E4 내부 복도로 진입하는 입구 지점,3015;3120;3024;3025;3121,WALK;WALK;WALK;WALK;WALK,410,496,,,,E1,E2;E3;E4,e_zone_entry;e1_e4;portal;decision_point
+3138,3,3F,3F_E56_ENTRY,NAV,CORRIDOR,3층 E5-E6 내부 복도 입구,3015 하부 backbone에서 E5 E6 내부 복도로 진입하는 입구 지점,3015;3026;3124,WALK;WALK;WALK,435,496,,,,E5,E6,e_zone_entry;e5_e6;portal;decision_point
+3140,3,3F,3F_D1_SOUTH_MID_JUNCTION,NAV,CORRIDOR,3층 D1 남측 수직연결 전면 분기점,3016과 3135를 잇는 복도 중간에서 3136 수직연결부와 3147 화장실로 갈라지는 지점,3016;3135;3136;3147,WALK;WALK;WALK;WALK,560,470,,,,D1,남측복도;에스컬레이터,d1_south_mid;junction;vertical_access;restroom_opposite_3136
+3141,3,3F,3F_C_HALL_UPPER_MID_LINK,NAV,CORRIDOR,3층 C홀 상부 중간 연결 노드,3131과 3050 및 3142를 잇는 C홀 상부 보조 연결 지점,3131;3050;3142;3151,WALK;WALK;WALK;WALK,286,145,,,,C홀,상부연결;3050,c_hall_upper_link;mid_junction;corridor
+3142,3,3F,3F_C3C4_UPPER_LINK,NAV,CORRIDOR,3층 C3-C4 상부 연결 노드,3052와 C3/C4 앵커 및 3141을 잇는 C홀 상부 연결 지점,3141;3052;3003;3063;3146;3145;3152,WALK;WALK;WALK;WALK;WALK;WALK;WALK,286,42,,,,C3,C4;전시장C홀,c_hall_upper_link;c3_c4_anchor_link;corridor
+3143,3,3F,3F_3132_ELEVATOR,CONN,ELEVATOR,3층 3132 인근 엘리베이터,3132 상부 연결부 인근 엘리베이터 연결 지점,3132,WALK,297,440,ELEV_CORE_3132,,,엘리베이터,3132;상부연결,elevator;vertical_core;3132_area
+3144,3,3F,3F_WEST_CORE_UPPER_ELEVATOR_UP,CONN,ELEVATOR,3층 서측 코어 상단 상행 엘리베이터,3131 오른쪽 위 인근의 상행 엘리베이터 연결 지점,3131,WALK,300,255,ELEV_CORE_W_UPPER_UP,,,엘리베이터,상행;3131,elevator;vertical_core;up;west_core_upper
+3145,3,3F,3F_3142_ESCALATOR_상측,CONN,ESCALATOR,3층 3142 인근 상측 에스컬레이터,3142 C3-C4 상부 연결 노드 인근 상측 에스컬레이터 연결 지점,3142,WALK,301,22,ESC_CORE_3142_상측,,,에스컬레이터,3142;상측,escalator;vertical_core;3142_area;상측
+3146,3,3F,3F_3142_ESCALATOR_하측,CONN,ESCALATOR,3층 3142 인근 하측 에스컬레이터,3142 C3-C4 상부 연결 노드 인근 하측 에스컬레이터 연결 지점,3142,WALK,301,62,ESC_CORE_3142_하측,,,에스컬레이터,3142;하측,escalator;vertical_core;3142_area;하측
+3147,3,3F,3F_D1_SOUTH_RESTROOM,DEST,RESTROOM,3층 D1 남측 화장실,3016-3140-3135 복도 중간에서 3136 수직연결부 반대편에 있는 화장실 목적지 지점,3140,WALK,530,470,,,,화장실,D1남측;3136반대편,restroom;d1_south;opposite_3136
+3148,3,3F,3F_E_WEST_BEND_STAIRS,CONN,STAIRS,3층 E구역 서측 계단,3014-3015 굴절부 인근 벽면에 위치한 계단 연결 지점,3014,WALK,350,521,STAIR_CORE_E_WEST,,,계단,3014;E구역서측,stairs;vertical_core;e_west_bend
+3149,3,3F,3F_PRAYER_ROOM_NEAR_STAIRS,CONN,STAIRS,3층 무슬림 기도실 인근 계단,3080 무슬림 전용 기도실 옆 3132-3014 연결 통로에 위치한 계단 연결 지점,3014,WALK,324,460,STAIR_CORE_PRAYER_NEAR,,,계단,3080;3132;기도실,stairs;vertical_core;prayer_room_near
+3150,3,3F,3F_3132_NEAR_RESTROOM,DEST,RESTROOM,3층 3132 인근 화장실,3014에서 3132 방향으로 진입할 때 3132 왼쪽 벽에 위치한 화장실 목적지 지점,3132,WALK,323,440,,,,화장실,3132;상부연결,restroom;3132_area
+3151,3,3F,3F_3141_ELEVATOR,CONN,ELEVATOR,3층 3141 인근 엘리베이터,3141 C홀 상부 중간 연결 노드 인근 엘리베이터 연결 지점,3141,WALK,276,165,ELEV_CORE_3141,,,엘리베이터,3141;C홀상부,elevator;vertical_core;3141_area
+3152,3,3F,3F_3142_ELEVATOR,CONN,ELEVATOR,3층 3142 인근 엘리베이터,3142 C3-C4 상부 연결 노드 인근 엘리베이터 연결 지점,3142,WALK,276,62,ELEV_CORE_3142,,,엘리베이터,3142;C3C4,elevator;vertical_core;3142_area
+3153,3,3F,3F_3050_NEAR_RESTROOM,DEST,RESTROOM,3층 3050 인근 화장실,3048과 3050 사이 C홀 상부 연결축에 위치한 화장실 목적지 지점,3050,WALK,260,210,,,,화장실,3048;3050;C홀상부,restroom;c_hall_upper_link;3050_area
