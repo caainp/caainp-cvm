@@ -12,7 +12,7 @@ These files are the COEX 3F view-localization artifacts used by the CVM/value-ma
 ## Sources
 
 - `source/coex_nodemap_m11.xlsx`: graph/node/edge source of truth. Read only.
-- `../view`: COEX view image root.
+- `view/3F`: COEX view image root.
 
 ## Regenerate views.csv
 
@@ -53,7 +53,7 @@ Outputs:
 ## COEX CVM step wrapper
 
 ```powershell
-python -m scripts.run_coex_cvm_step --root_dir . --image ..\view\3F\3132\3F_3132_context_01.jpg --target_node 3142
+python -m scripts.run_coex_cvm_step --root_dir . --image view\3F\3132\3F_3132_context_01.jpg --target_node 3142
 ```
 
 By default, only `use_for_localization=true` views are searched. Use

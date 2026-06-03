@@ -45,7 +45,11 @@ def _resolve_path(root_dir: Path, value: str) -> Path:
 
 
 def _image_path_for_csv(root_dir: Path, image_path: Path) -> str:
-    return "../" + image_path.resolve().relative_to(root_dir.parent).as_posix()
+    resolved = image_path.resolve()
+    try:
+        return resolved.relative_to(root_dir).as_posix()
+    except ValueError:
+        return "../" + resolved.relative_to(root_dir.parent).as_posix()
 
 
 def _label_tokens(view_label: str) -> List[str]:
@@ -313,7 +317,7 @@ def build_views(args: argparse.Namespace) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root_dir", default=".")
-    parser.add_argument("--view_root", default="../view")
+    parser.add_argument("--view_root", default="view/3F")
     parser.add_argument("--nodemap", default="data/coex/source/coex_nodemap_m11.xlsx")
     parser.add_argument("--out_dir", default="data/coex/localization")
     parser.add_argument("--report_dir", default="data/coex/reports")
