@@ -4,3 +4,6 @@
 *.jpg !text !filter !merge !diff
 *.jpeg !text !filter !merge !diff
 *.png !text !filter !merge !diff
+view/3F/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+view/3F/**/*.jpeg filter=lfs diff=lfs merge=lfs -text
+view/3F/**/*.png filter=lfs diff=lfs merge=lfs -text

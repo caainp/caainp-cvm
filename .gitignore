@@ -9,3 +9,7 @@ __pycache__/
 *.zip
 *.pdf
 node_images.zip
+data/coex/query_*_smoke.csv
+data/coex/*_smoke.csv
+data/coex/*_smoke.json
+data/coex/reports/
