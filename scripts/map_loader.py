@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from loguru import logger
 
+
 @dataclass
 class NodeRecord:
     node_id: int
@@ -115,6 +116,25 @@ def _safe_l2_normalize(vec: np.ndarray) -> np.ndarray:
     return (vec / norm).astype(np.float32)
 
 
+def _is_missing_scalar(value: Any) -> bool:
+    if value is None:
+        return True
+    try:
+        if isinstance(value, float) and np.isnan(value):
+            return True
+    except Exception:
+        pass
+    s = str(value).strip()
+    return s == "" or s.lower() in {"nan", "none", "null"}
+
+
+def _text_has_number(value: Any, number: int) -> bool:
+    if _is_missing_scalar(value):
+        return False
+    import re
+    return re.search(rf"(?<!\d){int(number)}(?!\d)", str(value)) is not None
+
+
 def load_map_csv(
     csv_path: str,
     id_column: str = "node_id",
@@ -169,6 +189,15 @@ def load_map_csv(
             if description_col and c == description_col:
                 continue
             extra[c] = row.get(c, None)
+
+        # Normalize sparse CSV metadata only when the room id is visibly represented in text.
+        # This avoids treating internal ROOM ids (e.g. offices without numeric signage) as OCR anchors.
+        if (
+            str(type_val).upper() == "ROOM"
+            and _is_missing_scalar(extra.get("anchor_room"))
+            and _text_has_number(desc_val, node_id)
+        ):
+            extra["anchor_room"] = str(node_id)
 
         rec = NodeRecord(
             node_id=node_id,
