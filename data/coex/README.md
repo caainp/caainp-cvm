@@ -65,6 +65,17 @@ The sources stay separated:
 - `localization/views.csv` and `localization/view_embeddings.npy` supply localization candidates.
 - The adapter passes aggregated `node_id` candidates to the value map.
 
+## Corridor congestion (person detection)
+
+```powershell
+pip install ultralytics
+python -m scripts.coex_congestion --root_dir . --image view\3F\3014\3F_3014_junction_axis_01.jpg --save-viz
+python -m scripts.coex_congestion --root_dir . --batch-passage --save-viz --output data/coex/reports/congestion_batch.json
+```
+
+Uses YOLO person detection + a corridor floor ROI (occupancy ratio). High congestion can emit
+`suggested_blocked_edges` for `build_value_map_v2(blocked_edges=...)`.
+
 The wrapper returns node-based output for AR/CSM integration:
 
 - `current_node`
