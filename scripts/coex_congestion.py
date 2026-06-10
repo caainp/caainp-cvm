@@ -68,6 +68,14 @@ def _run_single(args: argparse.Namespace) -> Dict[str, Any]:
     meta: Dict[str, Any] = {}
     if views_df is not None:
         meta = _lookup_view(views_df, image, root)
+    if args.node_id is not None:
+        meta["node_id"] = int(args.node_id)
+    if args.direction_to is not None:
+        meta["direction_to"] = str(args.direction_to)
+    if args.view_id is not None:
+        meta["view_id"] = str(args.view_id)
+    if args.view_role is not None:
+        meta["view_role"] = str(args.view_role)
 
     viz_path = None
     if args.save_viz:
@@ -155,6 +163,10 @@ def main() -> None:
     )
     parser.add_argument("--model", default="yolov8n.pt", help="Ultralytics YOLO weights")
     parser.add_argument("--device", default="auto", help="cpu | cuda | auto")
+    parser.add_argument("--node_id", type=int, default=None, help="Override current node for live/test frames")
+    parser.add_argument("--direction_to", default=None, help="Override forward node for live/test frames")
+    parser.add_argument("--view_id", default=None, help="Optional live/test frame id")
+    parser.add_argument("--view_role", default=None, help="Optional live/test frame role")
     parser.add_argument("--save-viz", action="store_true", help="Write annotated images")
     parser.add_argument(
         "--viz_dir",

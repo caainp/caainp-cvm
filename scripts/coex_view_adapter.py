@@ -48,6 +48,13 @@ def _boolish(value: Any) -> bool:
     return str(value).strip().lower() in {"1", "true", "yes", "y"}
 
 
+def _meta_string(row: pd.Series, key: str) -> str:
+    value = row.get(key, "")
+    if pd.isna(value):
+        return ""
+    return str(value).strip()
+
+
 def _load_view_index(index_path: Path) -> pd.DataFrame:
     df = pd.read_csv(index_path, encoding="utf-8-sig")
     missing = [c for c in REQUIRED_INDEX_COLUMNS if c not in df.columns]
@@ -102,6 +109,9 @@ def _view_rows(
             "rank": rank,
             "view_id": str(meta["view_id"]),
             "node_id": int(meta["node_id"]),
+            "view_label": _meta_string(meta, "view_label"),
+            "view_role": _meta_string(meta, "view_role"),
+            "direction_to": _meta_string(meta, "direction_to"),
             "view_score": float(scores[local_idx]),
             "image_path": str(meta["image_path"]),
             "use_for_localization": str(meta["use_for_localization"]).strip().lower(),
@@ -129,6 +139,9 @@ def _node_rows(
                 "node_id": node_id,
                 "node_score": score_f,
                 "best_view_id": str(meta["view_id"]),
+                "best_view_label": _meta_string(meta, "view_label"),
+                "best_view_role": _meta_string(meta, "view_role"),
+                "best_direction_to": _meta_string(meta, "direction_to"),
                 "best_view_score": score_f,
                 "best_view_path": str(meta["image_path"]),
             }

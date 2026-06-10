@@ -9,6 +9,8 @@
 3F_3014_junction_axis_01,3014,3F,junction_axis,view/3F/3014/3F_3014_junction_axis_01.jpg,corridor,,true,
 3F_3014_junction_axis_02,3014,3F,junction_axis,view/3F/3014/3F_3014_junction_axis_02.jpg,corridor,,true,
 3F_3014_to3013conn_01,3014,3F,to3013conn,view/3F/3014/3F_3014_to3013conn_01.jpg,connector,3013,true,
+3F_3014_to3080_01,3014,3F,to3080,view/3F/3014/3F_3014_to3080_01.jpg,corridor,3080,true,
+3F_3014_to3080_02,3014,3F,to3080,view/3F/3014/3F_3014_to3080_02.jpg,corridor,3080,true,
 3F_3014_to3132conn_01,3014,3F,to3132conn,view/3F/3014/3F_3014_to3132conn_01.jpg,connector,3132,true,
 3F_3014_to3148_01,3014,3F,to3148,view/3F/3014/3F_3014_to3148_01.jpg,corridor,3148,true,
 3F_3014_to3149_01,3014,3F,to3149,view/3F/3014/3F_3014_to3149_01.jpg,corridor,3149,true,
@@ -55,9 +57,11 @@
 3F_3048_to3047_ent_01,3048,3F,to3047_ent,view/3F/3048/3F_3048_to3047_ent_01.jpg,door,3047,false,room entrance candidate
 3F_3048_to3131_foyer_01,3048,3F,to3131_foyer,view/3F/3048/3F_3048_to3131_foyer_01.jpg,foyer,3131,true,
 3F_3048_to3131_foyer_02,3048,3F,to3131_foyer,view/3F/3048/3F_3048_to3131_foyer_02.jpg,foyer,3131,true,
+3F_3048_to3131_foyer_03,3048,3F,to3131_foyer,view/3F/3048/3F_3048_to3131_foyer_03.jpg,foyer,3131,true,
+3F_3048_to3131_foyer_04,3048,3F,to3131_foyer,view/3F/3048/3F_3048_to3131_foyer_04.jpg,foyer,3131,true,
 3F_3050_axis_to3048_01,3050,3F,axis_to3048,view/3F/3050/3F_3050_axis_to3048_01.jpg,corridor,3048,true,view_label=axis_to3048
 3F_3050_axis_to3052_01,3050,3F,axis_to3052,view/3F/3050/3F_3050_axis_to3052_01.jpg,corridor,3052,true,view_label=axis_to3052
-3F_3050_to3049_ent_01,3050,3F,to3049_ent,view/3F/3050/3F_3050_to3049_ent_01.jpg,door,3049,false,room entrance candidate
+3F_3050_to3049_terminal_01,3050,3F,to3049_terminal,view/3F/3050/3F_3050_to3049_terminal_01.jpg,corridor,3049,true,
 3F_3050_to3141_foyer_01,3050,3F,to3141_foyer,view/3F/3050/3F_3050_to3141_foyer_01.jpg,foyer,3141,true,
 3F_3050_to3141_foyer_02,3050,3F,to3141_foyer,view/3F/3050/3F_3050_to3141_foyer_02.jpg,foyer,3141,true,
 3F_3070_301A_ENT_01,3070,3F,301A_ENT,view/3F/3070/3F_3070_301A_ENT_01.jpg,door,,false,room entrance candidate
@@ -75,8 +79,6 @@
 3F_3079_from3044_01,3079,3F,from3044,view/3F/3079/3F_3079_from3044_01.jpg,corridor,,true,view_label=from3044
 3F_3079_from3046_01,3079,3F,from3046,view/3F/3079/3F_3079_from3046_01.jpg,corridor,,true,view_label=from3046
 3F_3080_ENT_01,3080,3F,ENT,view/3F/3080/3F_3080_ENT_01.jpg,door,,false,room entrance candidate
-3F_3080_from3014_01,3080,3F,from3014,view/3F/3080/3F_3080_from3014_01.jpg,corridor,,true,view_label=from3014
-3F_3080_from3014_02,3080,3F,from3014,view/3F/3080/3F_3080_from3014_02.jpg,corridor,,true,view_label=from3014
 3F_3080_to3014_01,3080,3F,to3014,view/3F/3080/3F_3080_to3014_01.jpg,corridor,3014,true,
 3F_3080_to3015_01,3080,3F,to3015,view/3F/3080/3F_3080_to3015_01.jpg,corridor,3015,true,
 3F_3122_E7_ent_01,3122,3F,E7_ent,view/3F/3122/3F_3122_E7_ent_01.jpg,door,,false,room entrance candidate
@@ -101,11 +103,12 @@
 3F_3132_axis_from3013_02,3132,3F,axis_from3013,view/3F/3132/3F_3132_axis_from3013_02.jpg,corridor,,true,view_label=axis_from3013
 3F_3132_axis_from3131_01,3132,3F,axis_from3131,view/3F/3132/3F_3132_axis_from3131_01.jpg,corridor,,true,view_label=axis_from3131
 3F_3132_axis_to3013_01,3132,3F,axis_to3013,view/3F/3132/3F_3132_axis_to3013_01.jpg,corridor,3013,true,view_label=axis_to3013
-3F_3132_context_01,3132,3F,context,view/3F/3132/3F_3132_context_01.jpg,context,,true,view_label=context
-3F_3132_context_02,3132,3F,context,view/3F/3132/3F_3132_context_02.jpg,context,,true,view_label=context
 3F_3132_from3014_01,3132,3F,from3014,view/3F/3132/3F_3132_from3014_01.jpg,corridor,,true,view_label=from3014
 3F_3132_from3143_01,3132,3F,from3143,view/3F/3132/3F_3132_from3143_01.jpg,corridor,,true,view_label=from3143
 3F_3132_to3014_01,3132,3F,to3014,view/3F/3132/3F_3132_to3014_01.jpg,corridor,3014,true,
+3F_3132_to3046_01,3132,3F,to3046,view/3F/3132/3F_3132_to3046_01.jpg,corridor,3046,true,
+3F_3132_to3046_02,3132,3F,to3046,view/3F/3132/3F_3132_to3046_02.jpg,corridor,3046,true,
+3F_3132_to3131_01,3132,3F,to3131,view/3F/3132/3F_3132_to3131_01.jpg,corridor,3131,true,
 3F_3132_to3143_01,3132,3F,to3143,view/3F/3132/3F_3132_to3143_01.jpg,corridor,3143,true,
 3F_3132_to3143_02,3132,3F,to3143,view/3F/3132/3F_3132_to3143_02.jpg,corridor,3143,true,
 3F_3134_CONN_01,3134,3F,CONN,view/3F/3134/3F_3134_CONN_01.jpg,connector,,true,

@@ -238,6 +238,8 @@ def build_embeddings(args: argparse.Namespace) -> None:
             "view_id": str(row["view_id"]),
             "node_id": int(row["node_id"]),
             "view_label": str(row["view_label"]),
+            "view_role": "" if pd.isna(row.get("view_role", "")) else str(row.get("view_role", "")),
+            "direction_to": "" if pd.isna(row.get("direction_to", "")) else str(row.get("direction_to", "")),
             "image_path": image_rel,
             "use_for_localization": str(row["use_for_localization"]).strip().lower(),
         })
@@ -297,6 +299,8 @@ def build_embeddings(args: argparse.Namespace) -> None:
                 "view_id",
                 "node_id",
                 "view_label",
+                "view_role",
+                "direction_to",
                 "image_path",
                 "use_for_localization",
             ],
