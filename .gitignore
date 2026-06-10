@@ -8,6 +8,7 @@ __pycache__/
 .env
 *.zip
 *.pdf
+*.pt
 node_images.zip
 data/coex/query_*_smoke.csv
 data/coex/*_smoke.csv

@@ -16,4 +16,5 @@ matplotlib
 seaborn
 loguru
 hf_xet
+ultralytics
 
